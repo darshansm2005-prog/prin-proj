@@ -101,8 +101,10 @@ const Cart = () => {
                   </div>
                 </div>
                 
-                <Button className="w-full bg-zinc-900 hover:bg-orange-600 text-white h-14 text-lg rounded-full transition-colors">
-                  Checkout Now <ArrowRight className="ml-2 h-5 w-5" />
+                <Button asChild className="w-full bg-zinc-900 hover:bg-orange-600 text-white h-14 text-lg rounded-full transition-colors">
+                  <Link to="/checkout">
+                    Checkout Now <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
                 </Button>
                 
                 <div className="mt-6 flex items-center justify-center gap-2 text-xs text-muted-foreground">

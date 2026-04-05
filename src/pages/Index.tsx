@@ -5,6 +5,8 @@ import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
+import BrandShowcase from '@/components/BrandShowcase';
+import Guides from '@/components/Guides';
 import { products } from '@/data/products';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
@@ -17,6 +19,7 @@ const Index = () => {
     <div className="min-h-screen bg-white">
       <Navbar />
       <Hero />
+      <BrandShowcase />
       
       {/* Features Section */}
       <section className="py-16 bg-zinc-50">
@@ -62,14 +65,10 @@ const Index = () => {
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
-          
-          <div className="mt-12 text-center md:hidden">
-            <Button asChild className="bg-orange-600 hover:bg-orange-700">
-              <Link to="/shop">View All Bikes</Link>
-            </Button>
-          </div>
         </div>
       </section>
+
+      <Guides />
 
       {/* Promo Section */}
       <section className="py-24 bg-zinc-900 text-white overflow-hidden">
