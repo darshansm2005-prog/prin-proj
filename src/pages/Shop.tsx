@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
+import BikeFinder from '@/components/BikeFinder';
 import { products } from '@/data/products';
 import { Button } from '@/components/ui/button';
 import { 
@@ -186,9 +187,7 @@ const Shop = () => {
             <div className="p-6 bg-zinc-900 rounded-2xl text-white">
               <h4 className="font-bold mb-2">Expert Advice</h4>
               <p className="text-xs text-zinc-400 mb-4">Not sure which bike fits your riding style?</p>
-              <Button variant="outline" className="w-full border-zinc-700 hover:bg-zinc-800 text-white">
-                Bike Finder Tool
-              </Button>
+              <BikeFinder />
             </div>
           </aside>
 

@@ -2,10 +2,11 @@
 
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Search, Menu, Bike, X } from 'lucide-react';
+import { ShoppingCart, Search, Menu, Bike, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCart } from '@/context/CartContext';
+import { useWishlist } from '@/context/WishlistContext';
 import {
   Sheet,
   SheetContent,
@@ -14,6 +15,7 @@ import {
 
 const Navbar = () => {
   const { cartCount } = useCart();
+  const { wishlistCount } = useWishlist();
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
@@ -54,16 +56,29 @@ const Navbar = () => {
             />
           </form>
           
-          <Button asChild variant="ghost" size="icon" className="relative">
-            <Link to="/cart">
-              <ShoppingCart className="h-5 w-5" />
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-orange-600 text-[10px] font-bold text-white">
-                  {cartCount}
-                </span>
-              )}
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button asChild variant="ghost" size="icon" className="relative">
+              <Link to="/shop">
+                <Heart className="h-5 w-5" />
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white">
+                    {wishlistCount}
+                  </span>
+                )}
+              </Link>
+            </Button>
+
+            <Button asChild variant="ghost" size="icon" className="relative">
+              <Link to="/cart">
+                <ShoppingCart className="h-5 w-5" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-orange-600 text-[10px] font-bold text-white">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+            </Button>
+          </div>
 
           <Sheet>
             <SheetTrigger asChild>
