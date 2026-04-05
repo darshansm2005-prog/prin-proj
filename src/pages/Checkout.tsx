@@ -1,19 +1,22 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { showSuccess } from '@/utils/toast';
-import { CreditCard, Truck, ShieldCheck, ArrowLeft } from 'lucide-react';
+import { CreditCard, Truck, ShieldCheck, ArrowLeft, Lock } from 'lucide-react';
 
 const Checkout = () => {
   const { cart, cartTotal, clearCart } = useCart();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handlePlaceOrder = (e: React.FormEvent) => {
@@ -28,6 +31,32 @@ const Checkout = () => {
       navigate('/');
     }, 2000);
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex flex-col bg-zinc-50">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="max-w-md w-full bg-white p-8 rounded-3xl shadow-sm text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-100 rounded-2xl mb-6">
+              <Lock className="h-8 w-8 text-orange-600" />
+            </div>
+            <h2 className="text-2xl font-bold mb-4">Login Required</h2>
+            <p className="text-muted-foreground mb-8">Please sign in to your account to complete your purchase.</p>
+            <div className="space-y-4">
+              <Button asChild className="w-full bg-zinc-900 hover:bg-orange-600 text-white h-12 rounded-xl">
+                <Link to="/login" state={{ from: location }}>Sign In</Link>
+              </Button>
+              <Button asChild variant="outline" className="w-full h-12 rounded-xl">
+                <Link to="/signup">Create Account</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   if (cart.length === 0) {
     return (
@@ -66,15 +95,15 @@ const Checkout = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="firstName">First Name</Label>
-                    <Input id="firstName" placeholder="John" required />
+                    <Input id="firstName" defaultValue={user?.name.split(' ')[0]} required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="lastName">Last Name</Label>
-                    <Input id="lastName" placeholder="Doe" required />
+                    <Input id="lastName" defaultValue={user?.name.split(' ')[1]} required />
                   </div>
                   <div className="md:col-span-2 space-y-2">
                     <Label htmlFor="email">Email Address</Label>
-                    <Input id="email" type="email" placeholder="john@example.com" required />
+                    <Input id="email" type="email" defaultValue={user?.email} required />
                   </div>
                   <div className="md:col-span-2 space-y-2">
                     <Label htmlFor="address">Street Address</Label>

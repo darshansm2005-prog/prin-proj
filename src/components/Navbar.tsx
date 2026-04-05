@@ -2,20 +2,30 @@
 
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Search, Menu, Bike, Heart } from 'lucide-react';
+import { ShoppingCart, Search, Menu, Bike, Heart, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
+import { useAuth } from '@/context/AuthContext';
 import {
   Sheet,
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Navbar = () => {
   const { cartCount } = useCart();
   const { wishlistCount } = useWishlist();
+  const { user, logout, isAuthenticated } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
@@ -58,7 +68,7 @@ const Navbar = () => {
           
           <div className="flex items-center gap-2">
             <Button asChild variant="ghost" size="icon" className="relative">
-              <Link to="/shop">
+              <Link to="/wishlist">
                 <Heart className="h-5 w-5" />
                 {wishlistCount > 0 && (
                   <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white">
@@ -78,6 +88,38 @@ const Navbar = () => {
                 )}
               </Link>
             </Button>
+
+            {isAuthenticated ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 rounded-xl">
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col">
+                      <span className="font-bold">{user?.name}</span>
+                      <span className="text-xs text-muted-foreground font-normal">{user?.email}</span>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/wishlist">My Wishlist</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>Order History</DropdownMenuItem>
+                  <DropdownMenuItem>Settings</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={logout} className="text-red-600">
+                    <LogOut className="mr-2 h-4 w-4" /> Log Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button asChild variant="ghost" size="sm" className="hidden md:flex font-bold">
+                <Link to="/login">Sign In</Link>
+              </Button>
+            )}
           </div>
 
           <Sheet>
@@ -103,7 +145,14 @@ const Navbar = () => {
                 <Link to="/shop?category=Road" className="text-lg font-semibold">Road</Link>
                 <Link to="/shop?category=Electric" className="text-lg font-semibold">Electric</Link>
                 <hr />
+                <Link to="/wishlist" className="text-lg font-semibold">My Wishlist ({wishlistCount})</Link>
                 <Link to="/cart" className="text-lg font-semibold">My Cart ({cartCount})</Link>
+                {!isAuthenticated && (
+                  <Link to="/login" className="text-lg font-semibold text-orange-600">Sign In</Link>
+                )}
+                {isAuthenticated && (
+                  <button onClick={logout} className="text-lg font-semibold text-red-600 text-left">Log Out</button>
+                )}
               </div>
             </SheetContent>
           </Sheet>
