@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { ShoppingCart, Search, Menu, Bike } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useCart } from '@/context/CartContext';
 import {
   Sheet,
   SheetContent,
@@ -12,6 +13,8 @@ import {
 } from "@/components/ui/sheet";
 
 const Navbar = () => {
+  const { cartCount } = useCart();
+
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between px-4 md:px-8">
@@ -39,11 +42,15 @@ const Navbar = () => {
             />
           </div>
           
-          <Button variant="ghost" size="icon" className="relative">
-            <ShoppingCart className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-orange-600 text-[10px] font-bold text-white">
-              0
-            </span>
+          <Button asChild variant="ghost" size="icon" className="relative">
+            <Link to="/cart">
+              <ShoppingCart className="h-5 w-5" />
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-orange-600 text-[10px] font-bold text-white">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
           </Button>
 
           <Sheet>
@@ -59,7 +66,7 @@ const Navbar = () => {
                 <Link to="/shop?category=Road" className="text-lg font-semibold">Road</Link>
                 <Link to="/shop?category=Electric" className="text-lg font-semibold">Electric</Link>
                 <hr />
-                <Link to="/account" className="text-lg font-semibold">My Account</Link>
+                <Link to="/cart" className="text-lg font-semibold">My Cart ({cartCount})</Link>
               </div>
             </SheetContent>
           </Sheet>
