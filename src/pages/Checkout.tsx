@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { showSuccess } from '@/utils/toast';
-import { CreditCard, Truck, ShieldCheck, ArrowLeft, Lock } from 'lucide-react';
+import { CreditCard, Truck, ShieldCheck, ArrowLeft, Lock, ShoppingBag } from 'lucide-react';
 
 const Checkout = () => {
   const { cart, cartTotal, clearCart } = useCart();
@@ -207,6 +207,10 @@ const Checkout = () => {
                 <div className="flex items-center gap-2 text-xs font-medium text-zinc-500">
                   <Truck className="h-4 w-4 text-orange-600" />
                   Insured Shipping Included
+                </div>
+                <div className="mt-6 flex items-center justify-center gap-2 text-[10px] text-muted-foreground">
+                  <ShoppingBag className="h-3 w-3" />
+                  Secure checkout powered by TRYsycle
                 </div>
               </div>
             </div>

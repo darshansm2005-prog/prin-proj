@@ -109,7 +109,7 @@ const Cart = () => {
                 
                 <div className="mt-6 flex items-center justify-center gap-2 text-xs text-muted-foreground">
                   <ShoppingBag className="h-4 w-4" />
-                  Secure checkout powered by VELOSHOP
+                  Secure checkout powered by TRYsycle
                 </div>
               </div>
             </div>

@@ -12,7 +12,7 @@ const Footer = () => {
           <div className="space-y-4">
             <Link to="/" className="flex items-center space-x-2 text-white">
               <Bike className="h-8 w-8 text-orange-600" />
-              <span className="text-2xl font-bold tracking-tighter">VELO<span className="text-orange-600">SHOP</span></span>
+              <span className="text-2xl font-bold tracking-tighter">TRY<span className="text-orange-600">sycle</span></span>
             </Link>
             <p className="text-sm leading-relaxed">
               Premium cycling gear for enthusiasts and professionals. We provide the best bikes from top brands with expert support.
@@ -62,7 +62,7 @@ const Footer = () => {
         </div>
         
         <div className="pt-8 border-t border-zinc-900 flex flex-col md:flex-row justify-between items-center gap-4 text-xs">
-          <p>© 2024 VELOSHOP. All rights reserved.</p>
+          <p>© 2024 TRYsycle. All rights reserved.</p>
           <div className="flex gap-6">
             <Link to="#" className="hover:text-white transition-colors">Privacy Policy</Link>
             <Link to="#" className="hover:text-white transition-colors">Terms of Service</Link>

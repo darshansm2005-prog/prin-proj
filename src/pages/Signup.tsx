@@ -34,7 +34,7 @@ const Signup = () => {
             <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-100 rounded-2xl mb-4">
               <Bike className="h-8 w-8 text-orange-600" />
             </div>
-            <h1 className="text-3xl font-extrabold tracking-tight">Join VELOSHOP</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight">Join TRYsycle</h1>
             <p className="text-muted-foreground mt-2">Create an account to start shopping</p>
           </div>
 

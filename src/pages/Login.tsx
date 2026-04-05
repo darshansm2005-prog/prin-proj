@@ -37,7 +37,7 @@ const Login = () => {
               <Bike className="h-8 w-8 text-orange-600" />
             </div>
             <h1 className="text-3xl font-extrabold tracking-tight">Welcome Back</h1>
-            <p className="text-muted-foreground mt-2">Login to your VELOSHOP account</p>
+            <p className="text-muted-foreground mt-2">Login to your TRYsycle account</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
