@@ -1,8 +1,8 @@
 "use client";
 
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { ShoppingCart, Search, Menu, Bike } from 'lucide-react';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ShoppingCart, Search, Menu, Bike, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCart } from '@/context/CartContext';
@@ -14,6 +14,16 @@ import {
 
 const Navbar = () => {
   const { cartCount } = useCart();
+  const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/shop?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery('');
+    }
+  };
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -33,14 +43,16 @@ const Navbar = () => {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="hidden lg:flex relative w-64">
+          <form onSubmit={handleSearch} className="hidden lg:flex relative w-64">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
               placeholder="Search bikes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-8 bg-muted/50 border-none focus-visible:ring-orange-600"
             />
-          </div>
+          </form>
           
           <Button asChild variant="ghost" size="icon" className="relative">
             <Link to="/cart">
@@ -61,6 +73,16 @@ const Navbar = () => {
             </SheetTrigger>
             <SheetContent side="right">
               <div className="flex flex-col gap-4 mt-8">
+                <form onSubmit={handleSearch} className="relative mb-4">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="search"
+                    placeholder="Search..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-8"
+                  />
+                </form>
                 <Link to="/shop" className="text-lg font-semibold">Shop All</Link>
                 <Link to="/shop?category=Mountain" className="text-lg font-semibold">Mountain</Link>
                 <Link to="/shop?category=Road" className="text-lg font-semibold">Road</Link>

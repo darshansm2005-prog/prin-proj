@@ -1,12 +1,14 @@
 "use client";
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { products } from '@/data/products';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useCart } from '@/context/CartContext';
 import { 
   Star, 
@@ -15,13 +17,21 @@ import {
   ShieldCheck, 
   Truck, 
   RotateCcw,
-  CheckCircle2
+  CheckCircle2,
+  MessageSquare
 } from 'lucide-react';
 
 const ProductDetail = () => {
   const { id } = useParams();
   const { addToCart } = useCart();
   const product = products.find(p => p.id === id);
+
+  const relatedProducts = useMemo(() => {
+    if (!product) return [];
+    return products
+      .filter(p => p.category === product.category && p.id !== product.id)
+      .slice(0, 4);
+  }, [product]);
 
   if (!product) {
     return (
@@ -49,7 +59,7 @@ const ProductDetail = () => {
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Shop
         </Link>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 mb-24">
           {/* Image Gallery */}
           <div className="space-y-4">
             <div className="aspect-square overflow-hidden rounded-3xl bg-zinc-100">
@@ -95,17 +105,17 @@ const ProductDetail = () => {
               <div className="flex items-baseline gap-4 mb-8">
                 {product.isSale ? (
                   <>
-                    <span className="text-4xl font-bold text-red-600">${product.salePrice}</span>
-                    <span className="text-xl text-muted-foreground line-through">${product.price}</span>
-                    <Badge className="bg-red-600">SAVE ${product.price - (product.salePrice || 0)}</Badge>
+                    <span className="text-4xl font-bold text-red-600">${product.salePrice?.toLocaleString()}</span>
+                    <span className="text-xl text-muted-foreground line-through">${product.price.toLocaleString()}</span>
+                    <Badge className="bg-red-600">SAVE ${(product.price - (product.salePrice || 0)).toLocaleString()}</Badge>
                   </>
                 ) : (
-                  <span className="text-4xl font-bold text-zinc-900">${product.price}</span>
+                  <span className="text-4xl font-bold text-zinc-900">${product.price.toLocaleString()}</span>
                 )}
               </div>
 
               <p className="text-zinc-600 leading-relaxed mb-8 text-lg">
-                The {product.name} is engineered for those who demand excellence. Whether you're tackling steep mountain trails or cruising through city streets, this bike delivers unmatched performance, comfort, and style. Featuring a lightweight frame and premium components, it's built to last.
+                The {product.name} is engineered for those who demand excellence. Whether you're tackling steep mountain trails or cruising through city streets, this bike delivers unmatched performance, comfort, and style.
               </p>
 
               <div className="space-y-4 mb-10">
@@ -150,27 +160,76 @@ const ProductDetail = () => {
           </div>
         </div>
 
-        {/* Specs Section */}
-        <section className="mt-24">
-          <h2 className="text-3xl font-bold mb-8">Technical Specifications</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
-            {[
-              { label: "Frame", value: "M5 alloy chassis and rear-end, Trail Geometry" },
-              { label: "Fork", value: "FOX FLOAT 34 Rhythm, GRIP damper" },
-              { label: "Rear Shock", value: "FOX FLOAT DPS Performance" },
-              { label: "Drivetrain", value: "SRAM NX Eagle, 12-speed" },
-              { label: "Brakes", value: "SRAM G2 R, 4-piston caliper, hydraulic disc" },
-              { label: "Wheelset", value: "Specialized 29, hookless alloy, 30mm inner width" },
-              { label: "Tires", value: "Butcher, GRID TRAIL casing, 29x2.3\"" },
-              { label: "Weight", value: "14.2 kg (Size S3)" }
-            ].map((spec, i) => (
-              <div key={i} className="flex justify-between py-4 border-b border-zinc-100">
-                <span className="font-bold text-zinc-500">{spec.label}</span>
-                <span className="text-zinc-900 text-right max-w-[60%]">{spec.value}</span>
-              </div>
-            ))}
-          </div>
-        </section>
+        {/* Tabs/Sections */}
+        <div className="space-y-24">
+          {/* Specs Section */}
+          <section>
+            <h2 className="text-3xl font-bold mb-8">Technical Specifications</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
+              {[
+                { label: "Frame", value: "M5 alloy chassis and rear-end, Trail Geometry" },
+                { label: "Fork", value: "FOX FLOAT 34 Rhythm, GRIP damper" },
+                { label: "Rear Shock", value: "FOX FLOAT DPS Performance" },
+                { label: "Drivetrain", value: "SRAM NX Eagle, 12-speed" },
+                { label: "Brakes", value: "SRAM G2 R, 4-piston caliper, hydraulic disc" },
+                { label: "Wheelset", value: "Specialized 29, hookless alloy, 30mm inner width" },
+                { label: "Tires", value: "Butcher, GRID TRAIL casing, 29x2.3\"" },
+                { label: "Weight", value: "14.2 kg (Size S3)" }
+              ].map((spec, i) => (
+                <div key={i} className="flex justify-between py-4 border-b border-zinc-100">
+                  <span className="font-bold text-zinc-500">{spec.label}</span>
+                  <span className="text-zinc-900 text-right max-w-[60%]">{spec.value}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Reviews Section */}
+          <section>
+            <div className="flex items-center justify-between mb-12">
+              <h2 className="text-3xl font-bold">Customer Reviews</h2>
+              <Button variant="outline" className="rounded-full">
+                <MessageSquare className="mr-2 h-4 w-4" /> Write a Review
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {[
+                { name: "Alex Thompson", rating: 5, date: "2 weeks ago", comment: "Absolutely incredible bike. The geometry is perfect for technical climbs and the suspension handles everything I throw at it." },
+                { name: "Sarah Miller", rating: 4, date: "1 month ago", comment: "Great performance for the price. Only minor issue was the seat post needed a bit of adjustment out of the box." }
+              ].map((review, i) => (
+                <div key={i} className="p-6 bg-zinc-50 rounded-3xl">
+                  <div className="flex items-center gap-4 mb-4">
+                    <Avatar>
+                      <AvatarFallback>{review.name[0]}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h4 className="font-bold">{review.name}</h4>
+                      <div className="flex items-center gap-2">
+                        <div className="flex text-orange-600">
+                          {[...Array(5)].map((_, j) => (
+                            <Star key={j} className={`h-3 w-3 ${j < review.rating ? 'fill-current' : 'text-zinc-300'}`} />
+                          ))}
+                        </div>
+                        <span className="text-xs text-muted-foreground">{review.date}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-zinc-600 text-sm leading-relaxed">{review.comment}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Related Products */}
+          <section>
+            <h2 className="text-3xl font-bold mb-8">You Might Also Like</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {relatedProducts.map(p => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </div>
+          </section>
+        </div>
       </main>
       
       <Footer />

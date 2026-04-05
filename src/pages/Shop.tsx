@@ -14,12 +14,20 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { Filter, SlidersHorizontal } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Filter, SlidersHorizontal, X } from 'lucide-react';
 
 const Shop = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const categoryFilter = searchParams.get('category');
+  const searchQuery = searchParams.get('q');
   const [sortBy, setSortBy] = useState('featured');
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
+
+  const brands = Array.from(new Set(products.map(p => p.brand))).sort();
+  const categories = ['Mountain', 'Road', 'Gravel', 'Electric', 'Kids'];
 
   const filteredProducts = useMemo(() => {
     let result = [...products];
@@ -27,19 +35,47 @@ const Shop = () => {
     if (categoryFilter) {
       result = result.filter(p => p.category === categoryFilter);
     }
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(p => 
+        p.name.toLowerCase().includes(query) || 
+        p.brand.toLowerCase().includes(query) ||
+        p.category.toLowerCase().includes(query)
+      );
+    }
+
+    if (selectedBrands.length > 0) {
+      result = result.filter(p => selectedBrands.includes(p.brand));
+    }
+
+    result = result.filter(p => {
+      const price = p.salePrice || p.price;
+      return price >= priceRange[0] && price <= priceRange[1];
+    });
     
     if (sortBy === 'price-low') {
-      result.sort((a, b) => a.price - b.price);
+      result.sort((a, b) => (a.salePrice || a.price) - (b.salePrice || b.price));
     } else if (sortBy === 'price-high') {
-      result.sort((a, b) => b.price - a.price);
+      result.sort((a, b) => (b.salePrice || b.price) - (a.salePrice || a.price));
     } else if (sortBy === 'rating') {
       result.sort((a, b) => b.rating - a.rating);
     }
     
     return result;
-  }, [categoryFilter, sortBy]);
+  }, [categoryFilter, searchQuery, sortBy, selectedBrands, priceRange]);
 
-  const categories = ['Mountain', 'Road', 'Gravel', 'Electric', 'Kids'];
+  const toggleBrand = (brand: string) => {
+    setSelectedBrands(prev => 
+      prev.includes(brand) ? prev.filter(b => b !== brand) : [...prev, brand]
+    );
+  };
+
+  const clearFilters = () => {
+    setSearchParams({});
+    setSelectedBrands([]);
+    setPriceRange([0, 10000]);
+  };
 
   return (
     <div className="min-h-screen bg-zinc-50">
@@ -49,7 +85,7 @@ const Shop = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div>
             <h1 className="text-4xl font-extrabold tracking-tight mb-2">
-              {categoryFilter ? `${categoryFilter} Bikes` : 'All Bikes'}
+              {searchQuery ? `Search: "${searchQuery}"` : categoryFilter ? `${categoryFilter} Bikes` : 'All Bikes'}
             </h1>
             <p className="text-muted-foreground">
               Showing {filteredProducts.length} premium models
@@ -71,9 +107,6 @@ const Shop = () => {
                 </SelectContent>
               </Select>
             </div>
-            <Button variant="outline" className="md:hidden">
-              <Filter className="mr-2 h-4 w-4" /> Filters
-            </Button>
           </div>
         </div>
 
@@ -81,35 +114,80 @@ const Shop = () => {
           {/* Sidebar Filters */}
           <aside className="hidden lg:block space-y-8">
             <div>
-              <h3 className="font-bold mb-4 flex items-center">
-                <SlidersHorizontal className="mr-2 h-4 w-4" /> Categories
-              </h3>
-              <div className="space-y-2">
-                <Button 
-                  variant={!categoryFilter ? "secondary" : "ghost"} 
-                  className="w-full justify-start font-medium"
-                  onClick={() => setSearchParams({})}
-                >
-                  All Categories
-                </Button>
-                {categories.map(cat => (
-                  <Button 
-                    key={cat}
-                    variant={categoryFilter === cat ? "secondary" : "ghost"} 
-                    className="w-full justify-start font-medium"
-                    onClick={() => setSearchParams({ category: cat })}
-                  >
-                    {cat}
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold flex items-center">
+                  <SlidersHorizontal className="mr-2 h-4 w-4" /> Filters
+                </h3>
+                {(categoryFilter || searchQuery || selectedBrands.length > 0) && (
+                  <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 text-xs text-orange-600">
+                    Clear All
                   </Button>
-                ))}
+                )}
+              </div>
+              
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-sm font-bold uppercase tracking-wider mb-3">Categories</h4>
+                  <div className="space-y-1">
+                    {categories.map(cat => (
+                      <Button 
+                        key={cat}
+                        variant={categoryFilter === cat ? "secondary" : "ghost"} 
+                        className="w-full justify-start font-medium h-9"
+                        onClick={() => setSearchParams({ category: cat })}
+                      >
+                        {cat}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-bold uppercase tracking-wider mb-3">Brands</h4>
+                  <div className="space-y-2 max-h-60 overflow-y-auto pr-2 scrollbar-thin">
+                    {brands.map(brand => (
+                      <div key={brand} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`brand-${brand}`} 
+                          checked={selectedBrands.includes(brand)}
+                          onCheckedChange={() => toggleBrand(brand)}
+                        />
+                        <Label htmlFor={`brand-${brand}`} className="text-sm font-medium cursor-pointer">
+                          {brand}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-bold uppercase tracking-wider mb-3">Price Range</h4>
+                  <div className="space-y-2">
+                    {[
+                      { label: 'Under $1,000', range: [0, 1000] },
+                      { label: '$1,000 - $3,000', range: [1000, 3000] },
+                      { label: '$3,000 - $6,000', range: [3000, 6000] },
+                      { label: '$6,000+', range: [6000, 10000] },
+                    ].map((p, i) => (
+                      <Button 
+                        key={i}
+                        variant={priceRange[0] === p.range[0] && priceRange[1] === p.range[1] ? "secondary" : "ghost"}
+                        className="w-full justify-start text-sm h-9"
+                        onClick={() => setPriceRange(p.range as [number, number])}
+                      >
+                        {p.label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
             
-            <div className="p-6 bg-orange-600 rounded-2xl text-white">
-              <h4 className="font-bold mb-2">Need Help?</h4>
-              <p className="text-sm text-orange-100 mb-4">Our experts are ready to help you find the perfect ride.</p>
-              <Button variant="secondary" className="w-full bg-white text-orange-600 hover:bg-orange-50">
-                Chat with Expert
+            <div className="p-6 bg-zinc-900 rounded-2xl text-white">
+              <h4 className="font-bold mb-2">Expert Advice</h4>
+              <p className="text-xs text-zinc-400 mb-4">Not sure which bike fits your riding style?</p>
+              <Button variant="outline" className="w-full border-zinc-700 hover:bg-zinc-800 text-white">
+                Bike Finder Tool
               </Button>
             </div>
           </aside>
@@ -126,7 +204,7 @@ const Shop = () => {
               <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed">
                 <h3 className="text-xl font-bold mb-2">No bikes found</h3>
                 <p className="text-muted-foreground mb-6">Try adjusting your filters or search terms.</p>
-                <Button onClick={() => setSearchParams({})}>Clear All Filters</Button>
+                <Button onClick={clearFilters}>Clear All Filters</Button>
               </div>
             )}
           </div>
