@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { products } from '@/data/products';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
+import ProductViewer360 from '@/components/ProductViewer360';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -18,13 +19,17 @@ import {
   Truck, 
   RotateCcw,
   CheckCircle2,
-  MessageSquare
+  MessageSquare,
+  Maximize2,
+  Box
 } from 'lucide-react';
 
 const ProductDetail = () => {
   const { id } = useParams();
   const { addToCart } = useCart();
   const product = products.find(p => p.id === id);
+  const [activeImage, setActiveImage] = useState(0);
+  const [viewMode, setViewMode] = useState<'gallery' | '360'>('gallery');
 
   const relatedProducts = useMemo(() => {
     if (!product) return [];
@@ -60,19 +65,55 @@ const ProductDetail = () => {
         </Link>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 mb-24">
-          {/* Image Gallery */}
-          <div className="space-y-4">
-            <div className="aspect-square overflow-hidden rounded-3xl bg-zinc-100">
-              <img 
-                src={product.image} 
-                alt={product.name} 
-                className="w-full h-full object-cover"
-              />
+          {/* Image Gallery & 360 View */}
+          <div className="space-y-6">
+            <div className="relative group">
+              {viewMode === 'gallery' ? (
+                <div className="aspect-square overflow-hidden rounded-3xl bg-zinc-100">
+                  <img 
+                    src={product.images[activeImage]} 
+                    alt={product.name} 
+                    className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+                  />
+                  <button className="absolute top-6 right-6 p-3 bg-white/80 backdrop-blur-md rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Maximize2 className="h-5 w-5 text-zinc-900" />
+                  </button>
+                </div>
+              ) : (
+                <ProductViewer360 images={product.images} />
+              )}
+
+              <div className="absolute top-6 left-6 flex gap-2">
+                <Button 
+                  variant={viewMode === 'gallery' ? 'default' : 'secondary'}
+                  size="sm"
+                  onClick={() => setViewMode('gallery')}
+                  className="rounded-full h-9 px-4 bg-white/90 backdrop-blur-sm text-zinc-900 hover:bg-white"
+                >
+                  Gallery
+                </Button>
+                <Button 
+                  variant={viewMode === '360' ? 'default' : 'secondary'}
+                  size="sm"
+                  onClick={() => setViewMode('360')}
+                  className={`rounded-full h-9 px-4 ${viewMode === '360' ? 'bg-orange-600 text-white' : 'bg-white/90 backdrop-blur-sm text-zinc-900 hover:bg-white'}`}
+                >
+                  <Box className="mr-2 h-4 w-4" /> 360° View
+                </Button>
+              </div>
             </div>
+
             <div className="grid grid-cols-4 gap-4">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="aspect-square rounded-xl bg-zinc-100 overflow-hidden cursor-pointer hover:ring-2 ring-orange-600 transition-all">
-                  <img src={product.image} alt="" className="w-full h-full object-cover opacity-60 hover:opacity-100" />
+              {product.images.map((img, i) => (
+                <div 
+                  key={i} 
+                  onClick={() => {
+                    setActiveImage(i);
+                    setViewMode('gallery');
+                  }}
+                  className={`aspect-square rounded-2xl bg-zinc-100 overflow-hidden cursor-pointer transition-all ${activeImage === i && viewMode === 'gallery' ? 'ring-2 ring-orange-600' : 'opacity-60 hover:opacity-100'}`}
+                >
+                  <img src={img} alt="" className="w-full h-full object-cover" />
                 </div>
               ))}
             </div>
