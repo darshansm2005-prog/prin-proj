@@ -51,6 +51,7 @@ const Navbar = () => {
             <Link to="/shop?category=Mountain" className="transition-colors hover:text-orange-600">Mountain</Link>
             <Link to="/shop?category=Road" className="transition-colors hover:text-orange-600">Road</Link>
             <Link to="/shop?category=Electric" className="transition-colors hover:text-orange-600">Electric</Link>
+            <Link to="/shop?category=Parts" className="transition-colors hover:text-orange-600">Parts</Link>
           </div>
         </div>
 
@@ -59,7 +60,7 @@ const Navbar = () => {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search bikes..."
+              placeholder="Search bikes & parts..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-8 bg-muted/50 border-none focus-visible:ring-orange-600"
@@ -144,6 +145,7 @@ const Navbar = () => {
                 <Link to="/shop?category=Mountain" className="text-lg font-semibold">Mountain</Link>
                 <Link to="/shop?category=Road" className="text-lg font-semibold">Road</Link>
                 <Link to="/shop?category=Electric" className="text-lg font-semibold">Electric</Link>
+                <Link to="/shop?category=Parts" className="text-lg font-semibold">Parts</Link>
                 <hr />
                 <Link to="/wishlist" className="text-lg font-semibold">My Wishlist ({wishlistCount})</Link>
                 <Link to="/cart" className="text-lg font-semibold">My Cart ({cartCount})</Link>

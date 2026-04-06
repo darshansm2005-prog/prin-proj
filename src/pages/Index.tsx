@@ -6,14 +6,14 @@ import Hero from '@/components/Hero';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
 import BrandShowcase from '@/components/BrandShowcase';
-import Guides from '@/components/Guides';
 import { products } from '@/data/products';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { ArrowRight, ShieldCheck, Truck, RotateCcw, Wrench } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Truck, RotateCcw, Wrench, Settings2 } from 'lucide-react';
 
 const Index = () => {
-  const featuredProducts = products.slice(0, 4);
+  const featuredProducts = products.filter(p => p.category !== 'Parts').slice(0, 4);
+  const featuredParts = products.filter(p => p.category === 'Parts').slice(0, 4);
 
   return (
     <div className="min-h-screen bg-white">
@@ -68,7 +68,32 @@ const Index = () => {
         </div>
       </section>
 
-      <Guides />
+      {/* Bike Parts Section */}
+      <section className="py-24 bg-zinc-50">
+        <div className="container px-4 md:px-8">
+          <div className="flex items-end justify-between mb-12">
+            <div>
+              <div className="flex items-center gap-2 text-orange-600 mb-2">
+                <Settings2 className="h-5 w-5" />
+                <span className="text-xs font-bold uppercase tracking-widest">Upgrade Your Ride</span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-4">Premium Components</h2>
+              <p className="text-muted-foreground max-w-xl">
+                High-performance parts to customize and maintain your bike. From carbon handlebars to precision drivetrains.
+              </p>
+            </div>
+            <Button asChild variant="ghost" className="hidden md:flex text-orange-600 hover:text-orange-700 hover:bg-orange-50">
+              <Link to="/shop?category=Parts">Shop All Parts <ArrowRight className="ml-2 h-4 w-4" /></Link>
+            </Button>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {featuredParts.map(product => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Promo Section */}
       <section className="py-24 bg-zinc-900 text-white overflow-hidden">

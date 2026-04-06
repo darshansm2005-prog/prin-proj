@@ -28,7 +28,7 @@ const Shop = () => {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
 
   const brands = Array.from(new Set(products.map(p => p.brand))).sort();
-  const categories = ['Mountain', 'Road', 'Gravel', 'Electric', 'Kids'];
+  const categories = ['Mountain', 'Road', 'Gravel', 'Electric', 'Kids', 'Parts'];
 
   const filteredProducts = useMemo(() => {
     let result = [...products];
@@ -86,10 +86,10 @@ const Shop = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div>
             <h1 className="text-4xl font-extrabold tracking-tight mb-2">
-              {searchQuery ? `Search: "${searchQuery}"` : categoryFilter ? `${categoryFilter} Bikes` : 'All Bikes'}
+              {searchQuery ? `Search: "${searchQuery}"` : categoryFilter ? `${categoryFilter} ${categoryFilter === 'Parts' ? '' : 'Bikes'}` : 'All Products'}
             </h1>
             <p className="text-muted-foreground">
-              Showing {filteredProducts.length} premium models
+              Showing {filteredProducts.length} premium items
             </p>
           </div>
           
@@ -165,10 +165,10 @@ const Shop = () => {
                   <h4 className="text-sm font-bold uppercase tracking-wider mb-3">Price Range</h4>
                   <div className="space-y-2">
                     {[
-                      { label: 'Under $1,000', range: [0, 1000] },
-                      { label: '$1,000 - $3,000', range: [1000, 3000] },
-                      { label: '$3,000 - $6,000', range: [3000, 6000] },
-                      { label: '$6,000+', range: [6000, 10000] },
+                      { label: 'Under $500', range: [0, 500] },
+                      { label: '$500 - $2,000', range: [500, 2000] },
+                      { label: '$2,000 - $5,000', range: [2000, 5000] },
+                      { label: '$5,000+', range: [5000, 10000] },
                     ].map((p, i) => (
                       <Button 
                         key={i}
@@ -201,7 +201,7 @@ const Shop = () => {
               </div>
             ) : (
               <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed">
-                <h3 className="text-xl font-bold mb-2">No bikes found</h3>
+                <h3 className="text-xl font-bold mb-2">No products found</h3>
                 <p className="text-muted-foreground mb-6">Try adjusting your filters or search terms.</p>
                 <Button onClick={clearFilters}>Clear All Filters</Button>
               </div>
