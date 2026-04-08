@@ -38,11 +38,18 @@ const Hero = () => {
             </p>
             
             <div className="flex flex-wrap gap-4">
-              <Button asChild size="lg" className="bg-orange-600 hover:bg-orange-700 text-white h-14 px-8 rounded-2xl text-lg font-bold">
+              <Button asChild size="lg" className="bg-orange-600 hover:bg-orange-700 text-white h-14 px-8 rounded-2xl text-lg font-bold shadow-lg shadow-orange-600/20 transition-all hover:scale-105 active:scale-95">
                 <Link to="/shop">Explore Collection <ArrowRight className="ml-2 h-5 w-5" /></Link>
               </Button>
-              <Button variant="outline" size="lg" className="h-14 px-8 rounded-2xl text-lg font-bold border-white/20 text-white hover:bg-white/10">
-                <Play className="mr-2 h-5 w-5 fill-current" /> Watch Film
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="h-14 px-8 rounded-2xl text-lg font-bold border-white/20 text-white bg-white/5 backdrop-blur-md hover:bg-white/15 hover:border-white/40 transition-all active:scale-95"
+              >
+                <div className="mr-3 h-8 w-8 rounded-full bg-orange-600 flex items-center justify-center shadow-lg shadow-orange-600/40">
+                  <Play className="h-4 w-4 fill-white text-white ml-0.5" />
+                </div>
+                Watch Film
               </Button>
             </div>
           </motion.div>
