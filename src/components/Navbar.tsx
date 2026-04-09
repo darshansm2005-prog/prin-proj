@@ -33,8 +33,11 @@ const Navbar = () => {
   // Dynamic classes based on scroll state
   const navTextColor = isScrolled ? "text-zinc-900" : "text-white";
   const navIconColor = isScrolled ? "text-zinc-700" : "text-white";
-  const navHoverBg = isScrolled ? "hover:bg-zinc-100" : "hover:bg-white/10";
-  const navHoverText = isScrolled ? "hover:text-orange-600" : "hover:text-orange-400";
+  
+  // Explicitly defining hover states to override library defaults
+  const navHoverClasses = isScrolled 
+    ? "hover:bg-zinc-100 hover:text-orange-600" 
+    : "hover:bg-white/10 hover:text-white";
 
   return (
     <nav className={cn(
@@ -66,7 +69,7 @@ const Navbar = () => {
               className={cn(
                 "text-xs font-bold uppercase tracking-[0.2em] transition-all duration-300",
                 location.pathname === link.path ? "text-orange-600" : navTextColor,
-                navHoverText
+                isScrolled ? "hover:text-orange-600" : "hover:text-orange-400"
               )}
             >
               {link.name}
@@ -80,9 +83,9 @@ const Navbar = () => {
             variant="ghost" 
             size="icon" 
             className={cn(
-              "rounded-full hidden md:flex transition-colors", 
+              "rounded-full hidden md:flex transition-all duration-300", 
               navIconColor, 
-              navHoverBg
+              navHoverClasses
             )}
           >
             <Search className="h-5 w-5" />
@@ -93,9 +96,9 @@ const Navbar = () => {
               variant="ghost" 
               size="icon" 
               className={cn(
-                "rounded-full relative transition-colors", 
+                "rounded-full relative transition-all duration-300", 
                 navIconColor, 
-                navHoverBg
+                navHoverClasses
               )}
             >
               <Heart className="h-5 w-5" />
@@ -112,9 +115,9 @@ const Navbar = () => {
               variant="ghost" 
               size="icon" 
               className={cn(
-                "rounded-full relative transition-colors", 
+                "rounded-full relative transition-all duration-300", 
                 navIconColor, 
-                navHoverBg
+                navHoverClasses
               )}
             >
               <ShoppingCart className="h-5 w-5" />
@@ -161,9 +164,9 @@ const Navbar = () => {
             variant="ghost" 
             size="icon" 
             className={cn(
-              "lg:hidden rounded-full transition-colors", 
+              "lg:hidden rounded-full transition-all duration-300", 
               navIconColor, 
-              navHoverBg
+              navHoverClasses
             )}
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
