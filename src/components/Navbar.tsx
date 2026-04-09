@@ -32,8 +32,9 @@ const Navbar = () => {
 
   // Dynamic classes based on scroll state
   const navTextColor = isScrolled ? "text-zinc-900" : "text-white";
-  const navIconColor = isScrolled ? "text-zinc-700" : "text-white/90";
-  const navHoverColor = isScrolled ? "hover:text-orange-600" : "hover:text-orange-400";
+  const navIconColor = isScrolled ? "text-zinc-700" : "text-white";
+  const navHoverBg = isScrolled ? "hover:bg-zinc-100" : "hover:bg-white/10";
+  const navHoverText = isScrolled ? "hover:text-orange-600" : "hover:text-orange-400";
 
   return (
     <nav className={cn(
@@ -65,7 +66,7 @@ const Navbar = () => {
               className={cn(
                 "text-xs font-bold uppercase tracking-[0.2em] transition-all duration-300",
                 location.pathname === link.path ? "text-orange-600" : navTextColor,
-                navHoverColor
+                navHoverText
               )}
             >
               {link.name}
@@ -75,12 +76,28 @@ const Navbar = () => {
 
         {/* Actions */}
         <div className="flex items-center space-x-1 md:space-x-3">
-          <Button variant="ghost" size="icon" className={cn("rounded-full hidden md:flex hover:bg-orange-500/10", navIconColor)}>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className={cn(
+              "rounded-full hidden md:flex transition-colors", 
+              navIconColor, 
+              navHoverBg
+            )}
+          >
             <Search className="h-5 w-5" />
           </Button>
           
           <Link to="/wishlist">
-            <Button variant="ghost" size="icon" className={cn("rounded-full relative hover:bg-orange-500/10", navIconColor)}>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className={cn(
+                "rounded-full relative transition-colors", 
+                navIconColor, 
+                navHoverBg
+              )}
+            >
               <Heart className="h-5 w-5" />
               {wishlistCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-orange-600 text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center ring-2 ring-white">
@@ -91,7 +108,15 @@ const Navbar = () => {
           </Link>
 
           <Link to="/cart">
-            <Button variant="ghost" size="icon" className={cn("rounded-full relative hover:bg-orange-500/10", navIconColor)}>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className={cn(
+                "rounded-full relative transition-colors", 
+                navIconColor, 
+                navHoverBg
+              )}
+            >
               <ShoppingCart className="h-5 w-5" />
               {cartCount > 0 && (
                 <span className={cn(
@@ -135,7 +160,11 @@ const Navbar = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            className={cn("lg:hidden rounded-full hover:bg-orange-500/10", navIconColor)}
+            className={cn(
+              "lg:hidden rounded-full transition-colors", 
+              navIconColor, 
+              navHoverBg
+            )}
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
             {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
