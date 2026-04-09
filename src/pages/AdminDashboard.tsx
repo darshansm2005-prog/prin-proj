@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Navigate, Link } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { products as initialProducts, Product } from '@/data/products';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   Plus, 
   Package, 
@@ -17,7 +19,7 @@ import {
   Trash2, 
   Search,
   LayoutDashboard,
-  Settings
+  X
 } from 'lucide-react';
 import { 
   Table, 
@@ -27,6 +29,21 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetTrigger,
+  SheetClose
+} from "@/components/ui/sheet";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 
@@ -34,8 +51,19 @@ const AdminDashboard = () => {
   const { isAdmin } = useAuth();
   const [inventory, setInventory] = useState<Product[]>(initialProducts);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
 
-  // Redirect if not admin
+  // Form State
+  const [newProduct, setNewProduct] = useState({
+    name: '',
+    brand: '',
+    price: '',
+    category: 'Mountain',
+    stock: '',
+    description: '',
+    image: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?q=80&w=800'
+  });
+
   if (!isAdmin) {
     return <Navigate to="/" replace />;
   }
@@ -48,6 +76,41 @@ const AdminDashboard = () => {
   const handleDelete = (id: string) => {
     setInventory(prev => prev.filter(p => p.id !== id));
     toast.error("Product removed from inventory");
+  };
+
+  const handleAddProduct = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const product: Product = {
+      id: (inventory.length + 1).toString(),
+      name: newProduct.name,
+      brand: newProduct.brand,
+      price: Number(newProduct.price),
+      category: newProduct.category as Product['category'],
+      stock: Number(newProduct.stock),
+      description: newProduct.description,
+      image: newProduct.image,
+      images: [newProduct.image],
+      rating: 5.0,
+      reviews: 0,
+      specs: {
+        "Frame": "Standard Alloy",
+        "Warranty": "2 Years"
+      }
+    };
+
+    setInventory([product, ...inventory]);
+    setIsAddSheetOpen(false);
+    setNewProduct({
+      name: '',
+      brand: '',
+      price: '',
+      category: 'Mountain',
+      stock: '',
+      description: '',
+      image: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?q=80&w=800'
+    });
+    toast.success(`${product.name} added to inventory!`);
   };
 
   const stats = [
@@ -66,9 +129,116 @@ const AdminDashboard = () => {
             <h1 className="text-4xl font-black tracking-tighter text-zinc-900 mb-2">ADMIN CONSOLE</h1>
             <p className="text-zinc-500">Manage your inventory, stock levels, and product details.</p>
           </div>
-          <Button className="bg-orange-600 hover:bg-orange-700 h-12 rounded-xl font-bold px-6">
-            <Plus className="mr-2 h-5 w-5" /> Add New Product
-          </Button>
+
+          <Sheet open={isAddSheetOpen} onOpenChange={setIsAddSheetOpen}>
+            <SheetTrigger asChild>
+              <Button className="bg-orange-600 hover:bg-orange-700 h-12 rounded-xl font-bold px-6">
+                <Plus className="mr-2 h-5 w-5" /> Add New Product
+              </Button>
+            </SheetTrigger>
+            <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+              <SheetHeader className="mb-8">
+                <SheetTitle className="text-2xl font-black">Add New Product</SheetTitle>
+              </SheetHeader>
+              
+              <form onSubmit={handleAddProduct} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Product Name</Label>
+                  <Input 
+                    id="name" 
+                    placeholder="e.g. Specialized Turbo Levo" 
+                    required 
+                    value={newProduct.name}
+                    onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="brand">Brand</Label>
+                    <Input 
+                      id="brand" 
+                      placeholder="Specialized" 
+                      required 
+                      value={newProduct.brand}
+                      onChange={(e) => setNewProduct({...newProduct, brand: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="category">Category</Label>
+                    <Select 
+                      value={newProduct.category} 
+                      onValueChange={(v) => setNewProduct({...newProduct, category: v})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Mountain">Mountain</SelectItem>
+                        <SelectItem value="Road">Road</SelectItem>
+                        <SelectItem value="Electric">Electric</SelectItem>
+                        <SelectItem value="Gravel">Gravel</SelectItem>
+                        <SelectItem value="Parts">Parts</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="price">Price ($)</Label>
+                    <Input 
+                      id="price" 
+                      type="number" 
+                      placeholder="2999" 
+                      required 
+                      value={newProduct.price}
+                      onChange={(e) => setNewProduct({...newProduct, price: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="stock">Initial Stock</Label>
+                    <Input 
+                      id="stock" 
+                      type="number" 
+                      placeholder="10" 
+                      required 
+                      value={newProduct.stock}
+                      onChange={(e) => setNewProduct({...newProduct, stock: e.target.value})}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="image">Image URL</Label>
+                  <Input 
+                    id="image" 
+                    placeholder="https://images.unsplash.com/..." 
+                    value={newProduct.image}
+                    onChange={(e) => setNewProduct({...newProduct, image: e.target.value})}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea 
+                    id="description" 
+                    placeholder="Describe the product features..." 
+                    className="h-32"
+                    value={newProduct.description}
+                    onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
+                  />
+                </div>
+
+                <div className="pt-4 flex gap-3">
+                  <SheetClose asChild>
+                    <Button type="button" variant="outline" className="flex-1 h-12 rounded-xl font-bold">Cancel</Button>
+                  </SheetClose>
+                  <Button type="submit" className="flex-1 bg-orange-600 hover:bg-orange-700 h-12 rounded-xl font-bold">Save Product</Button>
+                </div>
+              </form>
+            </SheetContent>
+          </Sheet>
         </div>
 
         {/* Stats Grid */}
