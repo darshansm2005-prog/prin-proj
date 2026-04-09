@@ -47,8 +47,8 @@ export const fetchProductById = async (id: string): Promise<Product | null> => {
   return data as Product;
 };
 
-// Keep the static products for now as a fallback or for initial seeding reference
-export const staticProducts: Product[] = [
+// Fallback data for initial render or if DB is empty
+export const products: Product[] = [
   {
     id: '1',
     name: 'Specialized Mountain Pro 1',

@@ -1,18 +1,28 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
-import { products } from '@/data/products';
+import { fetchProducts, Product, products as fallbackProducts } from '@/data/products';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Zap, Shield, Globe } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { ArrowRight, Zap, Shield, Globe, Loader2 } from 'lucide-react';
 
 const Index = () => {
-  const featuredProducts = products.slice(0, 4);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadFeatured = async () => {
+      const data = await fetchProducts();
+      // If DB is empty, use fallback, otherwise take first 4
+      setFeaturedProducts(data.length > 0 ? data.slice(0, 4) : fallbackProducts.slice(0, 4));
+      setIsLoading(false);
+    };
+    loadFeatured();
+  }, []);
 
   return (
     <div className="min-h-screen bg-white">
@@ -61,11 +71,17 @@ const Index = () => {
             <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-zinc-900 mt-2">FEATURED GEAR</h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-8 w-8 text-orange-600 animate-spin" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {featuredProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          )}
 
           <div className="mt-16 text-center">
             <Button asChild size="lg" className="bg-zinc-900 hover:bg-orange-600 text-white h-14 px-12 rounded-2xl text-lg font-bold transition-colors">

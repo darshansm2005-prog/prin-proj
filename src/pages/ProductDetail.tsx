@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { products } from '@/data/products';
+import { fetchProductById, Product } from '@/data/products';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductViewer360 from '@/components/ProductViewer360';
@@ -19,19 +19,45 @@ import {
   Truck, 
   RotateCcw,
   CheckCircle2,
-  Info
+  Info,
+  Loader2
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ProductDetail = () => {
   const { id } = useParams();
-  const product = products.find(p => p.id === id);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const [activeImage, setActiveImage] = useState(0);
   const [viewMode, setViewMode] = useState<'gallery' | '360'>('gallery');
 
-  if (!product) return <div>Product not found</div>;
+  useEffect(() => {
+    const loadProduct = async () => {
+      if (id) {
+        const data = await fetchProductById(id);
+        setProduct(data);
+      }
+      setIsLoading(false);
+    };
+    loadProduct();
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-12 w-12 text-orange-600 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!product) return (
+    <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+      <h2 className="text-2xl font-bold">Product not found</h2>
+      <Button asChild><Link to="/shop">Back to Shop</Link></Button>
+    </div>
+  );
 
   const currentPrice = product.salePrice || product.price;
   const discount = product.isSale ? Math.round(((product.price - product.salePrice!) / product.price) * 100) : 0;
@@ -78,13 +104,13 @@ const ProductDetail = () => {
               <div className="space-y-4">
                 <div className="aspect-square bg-zinc-50 rounded-3xl overflow-hidden border border-zinc-100">
                   <img 
-                    src={product.images[activeImage]} 
+                    src={product.images[activeImage] || product.image} 
                     alt={product.name}
                     className="w-full h-full object-contain p-8 transition-all duration-500"
                   />
                 </div>
                 <div className="grid grid-cols-4 gap-4">
-                  {product.images.map((img, i) => (
+                  {(product.images.length > 0 ? product.images : [product.image]).map((img, i) => (
                     <button
                       key={i}
                       onClick={() => setActiveImage(i)}
@@ -98,7 +124,7 @@ const ProductDetail = () => {
                 </div>
               </div>
             ) : (
-              <ProductViewer360 images={product.images} />
+              <ProductViewer360 images={product.images.length > 0 ? product.images : [product.image]} />
             )}
           </div>
 
@@ -198,7 +224,7 @@ const ProductDetail = () => {
           </TabsList>
           <TabsContent value="specs" className="py-12">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-24 gap-y-6">
-              {Object.entries(product.specs).map(([key, value]) => (
+              {Object.entries(product.specs || {}).map(([key, value]) => (
                 <div key={key} className="flex justify-between py-4 border-b border-zinc-100">
                   <span className="font-bold text-zinc-500">{key}</span>
                   <span className="font-medium text-zinc-900">{value}</span>
