@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Bike, ShoppingCart, Heart, User, Menu, X, Search } from 'lucide-react';
+import { Bike, ShoppingCart, Heart, User, Menu, X, Search, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
@@ -14,7 +14,7 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { cartCount } = useCart();
   const { wishlistCount } = useWishlist();
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
@@ -65,23 +65,17 @@ const Navbar = () => {
         {/* Desktop Nav */}
         <div className="hidden lg:flex items-center space-x-10">
           {navLinks.map((link) => {
-            // Improved active state logic
             const linkPath = link.path.split('?')[0];
             const linkSearch = link.path.split('?')[1] ? `?${link.path.split('?')[1]}` : '';
-            
             const isPathMatch = location.pathname === linkPath;
             const isSearchMatch = location.search === linkSearch;
             
             let isActive = false;
-            
             if (link.name === 'Shop') {
-              // Shop is only active if we are on /shop and NO category is selected
               isActive = isPathMatch && (location.search === '' || location.search === '?');
             } else if (link.path.includes('?')) {
-              // Category links (Mountain, Road) are active if both path and search match
               isActive = isPathMatch && isSearchMatch;
             } else {
-              // Home link
               isActive = isPathMatch;
             }
 
@@ -99,6 +93,19 @@ const Navbar = () => {
               </Link>
             );
           })}
+          
+          {isAdmin && (
+            <Link 
+              to="/admin"
+              className={cn(
+                "text-xs font-bold uppercase tracking-[0.2em] transition-all duration-300 flex items-center gap-2",
+                location.pathname === '/admin' ? "text-orange-600" : navTextColor,
+                "hover:text-orange-600"
+              )}
+            >
+              <LayoutDashboard className="h-4 w-4" /> Admin
+            </Link>
+          )}
         </div>
 
         {/* Actions */}
@@ -212,6 +219,15 @@ const Navbar = () => {
               {link.name}
             </Link>
           ))}
+          {isAdmin && (
+            <Link 
+              to="/admin"
+              className="block text-2xl font-black text-orange-600"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Admin Dashboard
+            </Link>
+          )}
           <div className="pt-6 border-t border-zinc-100">
             {!user && (
               <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>

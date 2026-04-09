@@ -7,6 +7,7 @@ interface User {
   id: string;
   email: string;
   name: string;
+  role: 'admin' | 'user';
 }
 
 interface AuthContextType {
@@ -14,6 +15,7 @@ interface AuthContextType {
   login: (email: string) => void;
   logout: () => void;
   isAuthenticated: boolean;
+  isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,14 +24,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
 
   const login = (email: string) => {
-    // Mock login
-    const mockUser = {
+    // Mock login logic
+    // For demo purposes, any email containing "admin" gets admin privileges
+    const role = email.toLowerCase().includes('admin') ? 'admin' : 'user';
+    
+    const mockUser: User = {
       id: '1',
       email,
       name: email.split('@')[0],
+      role,
     };
     setUser(mockUser);
-    toast.success(`Welcome back, ${mockUser.name}!`);
+    toast.success(`Welcome back, ${mockUser.name}! ${role === 'admin' ? '(Admin Access)' : ''}`);
   };
 
   const logout = () => {
@@ -38,9 +44,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const isAuthenticated = !!user;
+  const isAdmin = user?.role === 'admin';
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated }}>
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );
