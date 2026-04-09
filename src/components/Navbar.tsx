@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Bike, ShoppingCart, Heart, User, Menu, X, Search, LayoutDashboard } from 'lucide-react';
+import { Bike, ShoppingCart, Heart, User, Menu, X, Search, LayoutDashboard, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
@@ -63,7 +63,7 @@ const Navbar = () => {
         </Link>
 
         {/* Desktop Nav */}
-        <div className="hidden lg:flex items-center space-x-10">
+        <div className="hidden lg:flex items-center space-x-8">
           {navLinks.map((link) => {
             const linkPath = link.path.split('?')[0];
             const linkSearch = link.path.split('?')[1] ? `?${link.path.split('?')[1]}` : '';
@@ -98,12 +98,13 @@ const Navbar = () => {
             <Link 
               to="/admin"
               className={cn(
-                "text-xs font-bold uppercase tracking-[0.2em] transition-all duration-300 flex items-center gap-2",
-                location.pathname === '/admin' ? "text-orange-600" : navTextColor,
-                "hover:text-orange-600"
+                "flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all duration-300",
+                location.pathname === '/admin' 
+                  ? "bg-orange-600 text-white" 
+                  : "bg-orange-600/10 text-orange-600 hover:bg-orange-600 hover:text-white"
               )}
             >
-              <LayoutDashboard className="h-4 w-4" /> Admin
+              <LayoutDashboard className="h-3.5 w-3.5" /> Admin Panel
             </Link>
           )}
         </div>
@@ -167,16 +168,16 @@ const Navbar = () => {
 
           {user ? (
             <Button 
-              variant="outline" 
+              variant="ghost"
               onClick={logout} 
               className={cn(
-                "rounded-full hidden md:flex font-bold border-2 transition-all",
+                "rounded-full hidden md:flex font-bold transition-all gap-2",
                 shouldShowDarkNav 
-                  ? "border-zinc-200 text-zinc-900 hover:bg-zinc-900 hover:text-white hover:border-zinc-900" 
-                  : "border-white/20 text-white hover:bg-white hover:text-zinc-900 hover:border-white"
+                  ? "text-zinc-900 hover:bg-zinc-100 hover:text-red-600" 
+                  : "text-white hover:bg-white/10 hover:text-orange-400"
               )}
             >
-              Logout
+              <LogOut className="h-4 w-4" /> Logout
             </Button>
           ) : (
             <Link to="/login">
@@ -229,7 +230,15 @@ const Navbar = () => {
             </Link>
           )}
           <div className="pt-6 border-t border-zinc-100">
-            {!user && (
+            {user ? (
+              <Button 
+                variant="ghost" 
+                onClick={() => { logout(); setIsMobileMenuOpen(false); }}
+                className="w-full justify-start text-xl font-bold text-red-600 p-0"
+              >
+                <LogOut className="mr-2 h-6 w-6" /> Logout
+              </Button>
+            ) : (
               <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
                 <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white rounded-2xl h-14 font-bold text-lg shadow-lg shadow-orange-600/20">
                   Login / Register
