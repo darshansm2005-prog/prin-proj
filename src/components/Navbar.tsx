@@ -30,8 +30,6 @@ const Navbar = () => {
     { name: 'Road', path: '/shop?category=Road' },
   ];
 
-  // Determine if we should use the "dark" version of the nav (dark text/icons)
-  // We use it if the user has scrolled OR if we are not on the home page (since other pages have white backgrounds)
   const isHomePage = location.pathname === "/";
   const forceDarkNav = !isHomePage;
   const shouldShowDarkNav = isScrolled || forceDarkNav;
@@ -67,7 +65,26 @@ const Navbar = () => {
         {/* Desktop Nav */}
         <div className="hidden lg:flex items-center space-x-10">
           {navLinks.map((link) => {
-            const isActive = location.pathname === link.path || (link.path.includes('?') && location.search === link.path.split('?')[1]);
+            // Improved active state logic
+            const linkPath = link.path.split('?')[0];
+            const linkSearch = link.path.split('?')[1] ? `?${link.path.split('?')[1]}` : '';
+            
+            const isPathMatch = location.pathname === linkPath;
+            const isSearchMatch = location.search === linkSearch;
+            
+            let isActive = false;
+            
+            if (link.name === 'Shop') {
+              // Shop is only active if we are on /shop and NO category is selected
+              isActive = isPathMatch && (location.search === '' || location.search === '?');
+            } else if (link.path.includes('?')) {
+              // Category links (Mountain, Road) are active if both path and search match
+              isActive = isPathMatch && isSearchMatch;
+            } else {
+              // Home link
+              isActive = isPathMatch;
+            }
+
             return (
               <Link 
                 key={link.name} 
