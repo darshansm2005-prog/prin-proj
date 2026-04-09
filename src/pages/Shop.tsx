@@ -1,30 +1,40 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
-import { products } from '@/data/products';
+import { fetchProducts, Product } from '@/data/products';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, SlidersHorizontal } from 'lucide-react';
+import { Search, SlidersHorizontal, Loader2 } from 'lucide-react';
 
 const categories = ['All', 'Mountain', 'Road', 'Gravel', 'Electric', 'Kids', 'Parts'];
 
 const Shop = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const activeCategory = searchParams.get('category') || 'All';
 
-  const filteredProducts = useMemo(() => {
-    return products.filter(product => {
-      const matchesCategory = activeCategory === 'All' || product.category === activeCategory;
-      const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                           product.brand.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
-    });
-  }, [activeCategory, searchQuery]);
+  useEffect(() => {
+    const loadProducts = async () => {
+      setIsLoading(true);
+      const data = await fetchProducts();
+      setProducts(data);
+      setIsLoading(false);
+    };
+    loadProducts();
+  }, []);
+
+  const filteredProducts = products.filter(product => {
+    const matchesCategory = activeCategory === 'All' || product.category === activeCategory;
+    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                         product.brand.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <div className="min-h-screen bg-white">
@@ -55,7 +65,6 @@ const Shop = () => {
           </div>
         </div>
 
-        {/* Category Tabs */}
         <div className="flex overflow-x-auto pb-4 mb-12 gap-2 no-scrollbar">
           {categories.map((cat) => (
             <Button
@@ -71,8 +80,12 @@ const Shop = () => {
           ))}
         </div>
 
-        {/* Product Grid */}
-        {filteredProducts.length > 0 ? (
+        {isLoading ? (
+          <div className="py-24 flex flex-col items-center justify-center gap-4">
+            <Loader2 className="h-12 w-12 text-orange-600 animate-spin" />
+            <p className="text-zinc-500 font-bold">Loading inventory...</p>
+          </div>
+        ) : filteredProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {filteredProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
