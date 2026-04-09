@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface Product {
   id: string;
@@ -29,7 +29,11 @@ export const fetchProducts = async (): Promise<Product[]> => {
     return [];
   }
 
-  return data as Product[];
+  return data.map((p: any) => ({
+    ...p,
+    isSale: p.is_sale,
+    salePrice: p.sale_price
+  })) as Product[];
 };
 
 export const fetchProductById = async (id: string): Promise<Product | null> => {
@@ -44,7 +48,12 @@ export const fetchProductById = async (id: string): Promise<Product | null> => {
     return null;
   }
 
-  return data as Product;
+  const p = data;
+  return {
+    ...p,
+    isSale: p.is_sale,
+    salePrice: p.sale_price
+  } as Product;
 };
 
 // Fallback data for initial render or if DB is empty
