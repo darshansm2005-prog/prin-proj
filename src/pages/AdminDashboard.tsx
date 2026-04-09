@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { products as initialProducts, Product } from '@/data/products';
+import { Product, fetchProducts } from '@/data/products';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,7 +20,8 @@ import {
   Trash2, 
   Search,
   LayoutDashboard,
-  X
+  X,
+  Loader2
 } from 'lucide-react';
 import { 
   Table, 
@@ -48,8 +50,9 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 
 const AdminDashboard = () => {
-  const { isAdmin } = useAuth();
-  const [inventory, setInventory] = useState<Product[]>(initialProducts);
+  const { isAdmin, loading: authLoading } = useAuth();
+  const [inventory, setInventory] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
 
@@ -64,6 +67,24 @@ const AdminDashboard = () => {
     image: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?q=80&w=800'
   });
 
+  useEffect(() => {
+    const loadInventory = async () => {
+      setIsLoading(true);
+      const data = await fetchProducts();
+      setInventory(data);
+      setIsLoading(false);
+    };
+    if (isAdmin) loadInventory();
+  }, [isAdmin]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-12 w-12 text-orange-600 animate-spin" />
+      </div>
+    );
+  }
+
   if (!isAdmin) {
     return <Navigate to="/" replace />;
   }
@@ -73,20 +94,26 @@ const AdminDashboard = () => {
     p.brand.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase.from('products').delete().eq('id', id);
+    
+    if (error) {
+      toast.error("Failed to delete product");
+      return;
+    }
+
     setInventory(prev => prev.filter(p => p.id !== id));
     toast.error("Product removed from inventory");
   };
 
-  const handleAddProduct = (e: React.FormEvent) => {
+  const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const product: Product = {
-      id: (inventory.length + 1).toString(),
+    const productData = {
       name: newProduct.name,
       brand: newProduct.brand,
       price: Number(newProduct.price),
-      category: newProduct.category as Product['category'],
+      category: newProduct.category,
       stock: Number(newProduct.stock),
       description: newProduct.description,
       image: newProduct.image,
@@ -99,18 +126,37 @@ const AdminDashboard = () => {
       }
     };
 
-    setInventory([product, ...inventory]);
-    setIsAddSheetOpen(false);
-    setNewProduct({
-      name: '',
-      brand: '',
-      price: '',
-      category: 'Mountain',
-      stock: '',
-      description: '',
-      image: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?q=80&w=800'
-    });
-    toast.success(`${product.name} added to inventory!`);
+    const { data, error } = await supabase
+      .from('products')
+      .insert([productData])
+      .select();
+
+    if (error) {
+      toast.error("Failed to add product");
+      console.error(error);
+      return;
+    }
+
+    if (data) {
+      const addedProduct = {
+        ...data[0],
+        isSale: data[0].is_sale,
+        salePrice: data[0].sale_price
+      } as Product;
+      
+      setInventory([addedProduct, ...inventory]);
+      setIsAddSheetOpen(false);
+      setNewProduct({
+        name: '',
+        brand: '',
+        price: '',
+        category: 'Mountain',
+        stock: '',
+        description: '',
+        image: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?q=80&w=800'
+      });
+      toast.success(`${addedProduct.name} added to inventory!`);
+    }
   };
 
   const stats = [
@@ -274,72 +320,78 @@ const AdminDashboard = () => {
           </div>
 
           <div className="overflow-x-auto">
-            <Table>
-              <TableHeader className="bg-zinc-50">
-                <TableRow>
-                  <TableHead className="font-bold">Product</TableHead>
-                  <TableHead className="font-bold">Category</TableHead>
-                  <TableHead className="font-bold">Price</TableHead>
-                  <TableHead className="font-bold">Stock</TableHead>
-                  <TableHead className="font-bold">Status</TableHead>
-                  <TableHead className="text-right font-bold">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredProducts.map((product) => (
-                  <TableRow key={product.id} className="hover:bg-zinc-50/50 transition-colors">
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="h-12 w-12 rounded-lg bg-zinc-100 overflow-hidden flex-shrink-0">
-                          <img src={product.image} alt="" className="w-full h-full object-contain p-1" />
-                        </div>
-                        <div>
-                          <p className="font-bold text-zinc-900">{product.name}</p>
-                          <p className="text-xs text-zinc-500">{product.brand}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="rounded-full font-bold">{product.category}</Badge>
-                    </TableCell>
-                    <TableCell className="font-bold">${product.price.toLocaleString()}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span className={`font-bold ${product.stock < 5 ? 'text-red-600' : 'text-zinc-900'}`}>
-                          {product.stock}
-                        </span>
-                        {product.stock < 5 && <AlertCircle className="h-3 w-3 text-red-600" />}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {product.stock > 0 ? (
-                        <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none font-bold">Active</Badge>
-                      ) : (
-                        <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-none font-bold">Out of Stock</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:bg-zinc-100">
-                          <Edit3 className="h-4 w-4 text-zinc-600" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-9 w-9 rounded-lg hover:bg-red-50 hover:text-red-600"
-                          onClick={() => handleDelete(product.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            {isLoading ? (
+              <div className="py-24 flex justify-center">
+                <Loader2 className="h-8 w-8 text-orange-600 animate-spin" />
+              </div>
+            ) : (
+              <Table>
+                <TableHeader className="bg-zinc-50">
+                  <TableRow>
+                    <TableHead className="font-bold">Product</TableHead>
+                    <TableHead className="font-bold">Category</TableHead>
+                    <TableHead className="font-bold">Price</TableHead>
+                    <TableHead className="font-bold">Stock</TableHead>
+                    <TableHead className="font-bold">Status</TableHead>
+                    <TableHead className="text-right font-bold">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredProducts.map((product) => (
+                    <TableRow key={product.id} className="hover:bg-zinc-50/50 transition-colors">
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="h-12 w-12 rounded-lg bg-zinc-100 overflow-hidden flex-shrink-0">
+                            <img src={product.image} alt="" className="w-full h-full object-contain p-1" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-zinc-900">{product.name}</p>
+                            <p className="text-xs text-zinc-500">{product.brand}</p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="rounded-full font-bold">{product.category}</Badge>
+                      </TableCell>
+                      <TableCell className="font-bold">${product.price.toLocaleString()}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <span className={`font-bold ${product.stock < 5 ? 'text-red-600' : 'text-zinc-900'}`}>
+                            {product.stock}
+                          </span>
+                          {product.stock < 5 && <AlertCircle className="h-3 w-3 text-red-600" />}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {product.stock > 0 ? (
+                          <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none font-bold">Active</Badge>
+                        ) : (
+                          <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-none font-bold">Out of Stock</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:bg-zinc-100">
+                            <Edit3 className="h-4 w-4 text-zinc-600" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-9 w-9 rounded-lg hover:bg-red-50 hover:text-red-600"
+                            onClick={() => handleDelete(product.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </div>
           
-          {filteredProducts.length === 0 && (
+          {!isLoading && filteredProducts.length === 0 && (
             <div className="py-12 text-center text-zinc-500">
               No products found matching your search.
             </div>
