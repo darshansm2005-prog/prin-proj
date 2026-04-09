@@ -3,12 +3,26 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// We check if the variables exist before creating the client to avoid the "supabaseUrl is required" error
+// Helper to create a dummy client that doesn't crash the app
+const createDummyClient = () => ({
+  from: () => ({
+    select: () => ({
+      order: () => Promise.resolve({ data: [], error: null }),
+      eq: () => ({
+        single: () => Promise.resolve({ data: null, error: null }),
+      }),
+    }),
+  }),
+  auth: {
+    getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+  },
+} as any);
+
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase credentials not found. Please ensure the Supabase integration is complete and restart the app.');
+  console.warn('Supabase credentials missing. Using dummy client to prevent crashes.');
 }
 
-// If variables are missing, we export a proxy or a dummy to prevent the app from crashing immediately
 export const supabase = (supabaseUrl && supabaseAnonKey) 
   ? createClient(supabaseUrl, supabaseAnonKey)
-  : {} as any; // Fallback to prevent crash, though queries will fail until keys are provided
+  : createDummyClient();
