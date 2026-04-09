@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { 
   Plus, 
   Package, 
@@ -20,8 +21,8 @@ import {
   Trash2, 
   Search,
   LayoutDashboard,
-  X,
-  Loader2
+  Loader2,
+  Tag
 } from 'lucide-react';
 import { 
   Table, 
@@ -64,7 +65,9 @@ const AdminDashboard = () => {
     category: 'Mountain',
     stock: '',
     description: '',
-    image: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?q=80&w=800'
+    image: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?q=80&w=800',
+    isSale: false,
+    salePrice: ''
   });
 
   useEffect(() => {
@@ -118,6 +121,8 @@ const AdminDashboard = () => {
       description: newProduct.description,
       image: newProduct.image,
       images: [newProduct.image],
+      is_sale: newProduct.isSale,
+      sale_price: newProduct.isSale ? Number(newProduct.salePrice) : null,
       rating: 5.0,
       reviews: 0,
       specs: {
@@ -153,7 +158,9 @@ const AdminDashboard = () => {
         category: 'Mountain',
         stock: '',
         description: '',
-        image: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?q=80&w=800'
+        image: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?q=80&w=800',
+        isSale: false,
+        salePrice: ''
       });
       toast.success(`${addedProduct.name} added to inventory!`);
     }
@@ -214,7 +221,7 @@ const AdminDashboard = () => {
                     <Label htmlFor="category">Category</Label>
                     <Select 
                       value={newProduct.category} 
-                      onValueChange={(v) => setNewProduct({...newProduct, category: v})}
+                      onValueChange={(v) => setNewProduct({...newProduct, category: v as any})}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select category" />
@@ -232,7 +239,7 @@ const AdminDashboard = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="price">Price ($)</Label>
+                    <Label htmlFor="price">Regular Price ($)</Label>
                     <Input 
                       id="price" 
                       type="number" 
@@ -253,6 +260,33 @@ const AdminDashboard = () => {
                       onChange={(e) => setNewProduct({...newProduct, stock: e.target.value})}
                     />
                   </div>
+                </div>
+
+                <div className="p-4 bg-zinc-50 rounded-2xl border border-zinc-100 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Tag className="h-4 w-4 text-orange-600" />
+                      <Label htmlFor="isSale" className="font-bold">On Sale?</Label>
+                    </div>
+                    <Switch 
+                      id="isSale" 
+                      checked={newProduct.isSale}
+                      onCheckedChange={(checked) => setNewProduct({...newProduct, isSale: checked})}
+                    />
+                  </div>
+                  {newProduct.isSale && (
+                    <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                      <Label htmlFor="salePrice">Sale Price ($)</Label>
+                      <Input 
+                        id="salePrice" 
+                        type="number" 
+                        placeholder="1999" 
+                        required={newProduct.isSale}
+                        value={newProduct.salePrice}
+                        onChange={(e) => setNewProduct({...newProduct, salePrice: e.target.value})}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -353,7 +387,16 @@ const AdminDashboard = () => {
                       <TableCell>
                         <Badge variant="outline" className="rounded-full font-bold">{product.category}</Badge>
                       </TableCell>
-                      <TableCell className="font-bold">${product.price.toLocaleString()}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className={`font-bold ${product.isSale ? 'text-orange-600' : 'text-zinc-900'}`}>
+                            ${(product.salePrice || product.price).toLocaleString()}
+                          </span>
+                          {product.isSale && (
+                            <span className="text-[10px] text-zinc-400 line-through">${product.price.toLocaleString()}</span>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <span className={`font-bold ${product.stock < 5 ? 'text-red-600' : 'text-zinc-900'}`}>
