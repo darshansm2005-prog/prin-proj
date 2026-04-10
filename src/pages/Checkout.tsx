@@ -3,37 +3,86 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Bike, ChevronLeft, CreditCard, Truck, ShieldCheck } from 'lucide-react';
+import { Bike, ChevronLeft, CreditCard, Truck, ShieldCheck, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const Checkout = () => {
   const { cart, cartTotal, clearCart } = useCart();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handlePlaceOrder = (e: React.FormEvent) => {
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    address: '',
+    city: '',
+    zip: ''
+  });
+
+  const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) {
+      toast.error("Please login to complete your purchase");
+      navigate('/login');
+      return;
+    }
+
     setIsProcessing(true);
     
-    // Simulate payment processing
-    setTimeout(() => {
-      setIsProcessing(false);
-      toast.success("Order placed successfully! Check your email for confirmation.");
+    try {
+      // 1. Create the order
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert([{
+          user_id: user.id,
+          total_amount: cartTotal,
+          shipping_address: formData,
+          status: 'completed'
+        }])
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // 2. Create order items
+      const orderItems = cart.map(item => ({
+        order_id: order.id,
+        product_id: item.id,
+        quantity: item.quantity,
+        price_at_time: item.salePrice || item.price,
+        product_name: item.name,
+        product_image: item.image
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+      if (itemsError) throw itemsError;
+
+      toast.success("Order placed successfully!");
       clearCart();
-      navigate('/');
-    }, 2000);
+      navigate('/profile');
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to process order. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   if (cart.length === 0) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8">
         <h2 className="text-2xl font-bold mb-4">Your cart is empty</h2>
-        <Button asChild className="bg-orange-600">
-          <Link to="/shop">Return to Shop</Link>
-        </Button>
+        <Button asChild className="bg-orange-600"><Link to="/shop">Return to Shop</Link></Button>
       </div>
     );
   }
@@ -54,7 +103,6 @@ const Checkout = () => {
 
       <main className="container px-4 md:px-8 py-12">
         <form onSubmit={handlePlaceOrder} className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Shipping & Payment Info */}
           <div className="space-y-8">
             <section className="bg-white p-8 rounded-3xl border border-zinc-100 shadow-sm">
               <h2 className="text-2xl font-black mb-6 flex items-center gap-2">
@@ -63,23 +111,43 @@ const Checkout = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2 col-span-2 sm:col-span-1">
                   <Label htmlFor="firstName">First Name</Label>
-                  <Input id="firstName" required className="rounded-xl" />
+                  <Input 
+                    id="firstName" required className="rounded-xl" 
+                    value={formData.firstName}
+                    onChange={(e) => setFormData({...formData, firstName: e.target.value})}
+                  />
                 </div>
                 <div className="space-y-2 col-span-2 sm:col-span-1">
                   <Label htmlFor="lastName">Last Name</Label>
-                  <Input id="lastName" required className="rounded-xl" />
+                  <Input 
+                    id="lastName" required className="rounded-xl" 
+                    value={formData.lastName}
+                    onChange={(e) => setFormData({...formData, lastName: e.target.value})}
+                  />
                 </div>
                 <div className="space-y-2 col-span-2">
                   <Label htmlFor="address">Address</Label>
-                  <Input id="address" required className="rounded-xl" />
+                  <Input 
+                    id="address" required className="rounded-xl" 
+                    value={formData.address}
+                    onChange={(e) => setFormData({...formData, address: e.target.value})}
+                  />
                 </div>
                 <div className="space-y-2 col-span-2 sm:col-span-1">
                   <Label htmlFor="city">City</Label>
-                  <Input id="city" required className="rounded-xl" />
+                  <Input 
+                    id="city" required className="rounded-xl" 
+                    value={formData.city}
+                    onChange={(e) => setFormData({...formData, city: e.target.value})}
+                  />
                 </div>
                 <div className="space-y-2 col-span-2 sm:col-span-1">
                   <Label htmlFor="zip">ZIP Code</Label>
-                  <Input id="zip" required className="rounded-xl" />
+                  <Input 
+                    id="zip" required className="rounded-xl" 
+                    value={formData.zip}
+                    onChange={(e) => setFormData({...formData, zip: e.target.value})}
+                  />
                 </div>
               </div>
             </section>
@@ -114,7 +182,6 @@ const Checkout = () => {
             </section>
           </div>
 
-          {/* Order Summary */}
           <div className="lg:sticky lg:top-24 h-fit">
             <div className="bg-zinc-900 text-white p-8 rounded-3xl shadow-xl">
               <h2 className="text-2xl font-black mb-8">Order Summary</h2>
@@ -153,7 +220,7 @@ const Checkout = () => {
                 disabled={isProcessing}
                 className="w-full bg-orange-600 hover:bg-orange-700 h-16 rounded-2xl text-xl font-black mt-8 transition-all active:scale-[0.98]"
               >
-                {isProcessing ? "Processing..." : "Place Order Now"}
+                {isProcessing ? <Loader2 className="animate-spin" /> : "Place Order Now"}
               </Button>
 
               <div className="mt-6 flex items-center justify-center gap-2 text-zinc-500 text-xs">
