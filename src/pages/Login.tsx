@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
-import { Bike, ArrowLeft, Loader2, Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import { Bike, ArrowLeft, Loader2, Eye, EyeOff, Mail, Lock, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -50,6 +50,12 @@ const Login = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const fillDemoAdmin = () => {
+    setEmail('admin1017@test.com');
+    setPassword('admin123');
+    toast.info("Admin credentials filled. Click Sign Up if this is your first time!");
   };
 
   if (loading) {
@@ -120,13 +126,24 @@ const Login = () => {
               </div>
             </div>
 
-            <Button 
-              type="submit" 
-              disabled={isSubmitting}
-              className="w-full bg-orange-600 hover:bg-orange-700 h-12 rounded-xl font-bold text-lg shadow-lg shadow-orange-600/20"
-            >
-              {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : (isLogin ? "Sign In" : "Sign Up")}
-            </Button>
+            <div className="space-y-3">
+              <Button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="w-full bg-orange-600 hover:bg-orange-700 h-12 rounded-xl font-bold text-lg shadow-lg shadow-orange-600/20"
+              >
+                {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : (isLogin ? "Sign In" : "Sign Up")}
+              </Button>
+
+              <Button 
+                type="button"
+                variant="outline"
+                onClick={fillDemoAdmin}
+                className="w-full h-12 rounded-xl font-bold border-zinc-200 text-zinc-600 hover:bg-zinc-50"
+              >
+                <ShieldCheck className="mr-2 h-4 w-4 text-orange-600" /> Demo Admin Access
+              </Button>
+            </div>
           </form>
 
           <div className="mt-6 text-center">
