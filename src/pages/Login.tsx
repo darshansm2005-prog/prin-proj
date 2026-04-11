@@ -4,14 +4,14 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
-import { Bike, ArrowLeft, Loader2, Eye, EyeOff, Mail, Lock, ShieldCheck } from 'lucide-react';
+import { Bike, ArrowLeft, Loader2, Eye, EyeOff, Mail, Lock, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 
 const Login = () => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, devLogin } = useAuth();
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
@@ -50,12 +50,6 @@ const Login = () => {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const fillDemoAdmin = () => {
-    setEmail('admin1017@test.com');
-    setPassword('admin123');
-    toast.info("Admin credentials filled. Click Sign Up if this is your first time!");
   };
 
   if (loading) {
@@ -135,13 +129,18 @@ const Login = () => {
                 {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : (isLogin ? "Sign In" : "Sign Up")}
               </Button>
 
+              <div className="relative py-2">
+                <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-zinc-100"></span></div>
+                <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-zinc-400">Or bypass for testing</span></div>
+              </div>
+
               <Button 
                 type="button"
                 variant="outline"
-                onClick={fillDemoAdmin}
-                className="w-full h-12 rounded-xl font-bold border-zinc-200 text-zinc-600 hover:bg-zinc-50"
+                onClick={devLogin}
+                className="w-full h-12 rounded-xl font-bold border-orange-200 text-orange-600 hover:bg-orange-50"
               >
-                <ShieldCheck className="mr-2 h-4 w-4 text-orange-600" /> Demo Admin Access
+                <ShieldAlert className="mr-2 h-4 w-4" /> Dev Admin Bypass
               </Button>
             </div>
           </form>

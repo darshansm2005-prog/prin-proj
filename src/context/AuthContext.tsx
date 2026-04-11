@@ -9,6 +9,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   logout: () => Promise<void>;
+  devLogin: () => void;
   isAuthenticated: boolean;
   isAdmin: boolean;
   loading: boolean;
@@ -22,14 +23,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    // Get initial session
     const initAuth = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) throw error;
         
-        setSession(session);
-        setUser(session?.user ?? null);
+        if (session) {
+          setSession(session);
+          setUser(session.user);
+        }
       } catch (error) {
         console.error("Auth initialization error:", error);
       } finally {
@@ -39,17 +41,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     initAuth();
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-      
-      if (_event === 'SIGNED_IN') {
-        toast.success("Welcome back!");
-      } else if (_event === 'SIGNED_OUT') {
-        toast.info("Logged out successfully");
+      if (session) {
+        setSession(session);
+        setUser(session.user);
+      } else {
+        setSession(null);
+        setUser(null);
       }
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
@@ -57,20 +57,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+      toast.info("Logged out successfully");
     } catch (error) {
       toast.error("Error signing out");
-      console.error(error);
     }
   };
 
+  const devLogin = () => {
+    // Mock user for development bypass
+    const mockUser = {
+      id: 'dev-admin-id',
+      email: 'admin-bypass@test.com',
+      app_metadata: { role: 'admin' },
+      user_metadata: {},
+      aud: 'authenticated',
+      created_at: new Date().toISOString()
+    } as User;
+    
+    setUser(mockUser);
+    toast.success("Dev Mode: Logged in as Admin");
+  };
+
   const isAuthenticated = !!user;
-  // Updated logic: Any email containing "admin" or the specific test email will have admin rights
   const isAdmin = user?.email?.includes('admin') || user?.app_metadata?.role === 'admin';
 
   return (
-    <AuthContext.Provider value={{ user, session, logout, isAuthenticated, isAdmin, loading }}>
+    <AuthContext.Provider value={{ user, session, logout, devLogin, isAuthenticated, isAdmin, loading }}>
       {children}
     </AuthContext.Provider>
   );
