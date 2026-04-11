@@ -66,7 +66,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const isAuthenticated = !!user;
-  const isAdmin = user?.email?.includes('admin') || user?.app_metadata?.role === 'admin';
+  const isAdmin = user?.email === 'admin1017@test.com' || user?.app_metadata?.role === 'admin';
 
   return (
     <AuthContext.Provider value={{ user, session, logout, isAuthenticated, isAdmin, loading }}>
