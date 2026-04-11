@@ -24,7 +24,8 @@ import {
   Loader2,
   Tag,
   Eye,
-  EyeOff
+  EyeOff,
+  Layers
 } from 'lucide-react';
 import { 
   Table, 
@@ -65,6 +66,7 @@ const AdminDashboard = () => {
     brand: '',
     price: '',
     category: 'Mountain',
+    material: '',
     stock: '',
     description: '',
     image: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?q=80&w=800',
@@ -138,6 +140,7 @@ const AdminDashboard = () => {
       brand: newProduct.brand,
       price: Number(newProduct.price),
       category: newProduct.category,
+      material: newProduct.material,
       stock: Number(newProduct.stock),
       description: newProduct.description,
       image: newProduct.image,
@@ -148,7 +151,7 @@ const AdminDashboard = () => {
       rating: 5.0,
       reviews: 0,
       specs: {
-        "Frame": "Standard Alloy",
+        "Frame": newProduct.material || "Standard Alloy",
         "Warranty": "2 Years"
       }
     };
@@ -179,6 +182,7 @@ const AdminDashboard = () => {
         brand: '',
         price: '',
         category: 'Mountain',
+        material: '',
         stock: '',
         description: '',
         image: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?q=80&w=800',
@@ -258,6 +262,20 @@ const AdminDashboard = () => {
                         <SelectItem value="Parts">Parts</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="material">Material</Label>
+                  <div className="relative">
+                    <Layers className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                    <Input 
+                      id="material" 
+                      placeholder="e.g. Carbon Fiber, Aluminum" 
+                      className="pl-10"
+                      value={newProduct.material}
+                      onChange={(e) => setNewProduct({...newProduct, material: e.target.value})}
+                    />
                   </div>
                 </div>
 
@@ -400,6 +418,7 @@ const AdminDashboard = () => {
                   <TableRow>
                     <TableHead className="font-bold">Product</TableHead>
                     <TableHead className="font-bold">Category</TableHead>
+                    <TableHead className="font-bold">Material</TableHead>
                     <TableHead className="font-bold">Price</TableHead>
                     <TableHead className="font-bold">Stock</TableHead>
                     <TableHead className="font-bold">Visibility</TableHead>
@@ -422,6 +441,9 @@ const AdminDashboard = () => {
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="rounded-full font-bold">{product.category}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm font-medium text-zinc-600">{product.material || 'N/A'}</span>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">

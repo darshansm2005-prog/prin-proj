@@ -8,6 +8,7 @@ export interface Product {
   brand: string;
   price: number;
   category: 'Mountain' | 'Road' | 'Gravel' | 'Electric' | 'Kids' | 'Parts';
+  material?: string; // Added material field
   image: string;
   images: string[];
   description: string;
@@ -81,6 +82,7 @@ export const products: Product[] = [
     brand: 'Specialized',
     price: 12000,
     category: 'Mountain',
+    material: 'FACT 12m Carbon',
     image: 'https://images.unsplash.com/photo-1576433733026-d3f5ee6693c7?q=80&w=800',
     images: [
       'https://images.unsplash.com/photo-1576433733026-d3f5ee6693c7?q=80&w=800',
@@ -101,6 +103,7 @@ export const products: Product[] = [
     brand: 'Specialized',
     price: 8500,
     category: 'Road',
+    material: 'FACT 10r Carbon',
     image: 'https://images.unsplash.com/photo-1511994298241-608e28f14f66?q=80&w=800',
     images: ['https://images.unsplash.com/photo-1511994298241-608e28f14f66?q=80&w=800'],
     description: "One bike to rule them all. Aerodynamics, lightweight, and ride quality you thought impossible. The Tarmac SL8 is the fastest race bike in the world.",
@@ -116,6 +119,7 @@ export const products: Product[] = [
     brand: 'Specialized',
     price: 5800,
     category: 'Electric',
+    material: 'M5 Premium Alloy',
     image: 'https://images.unsplash.com/photo-1593764592116-bfb2a97c642a?q=80&w=800',
     images: ['https://images.unsplash.com/photo-1593764592116-bfb2a97c642a?q=80&w=800'],
     description: "The power to ride more trails. An unbelievable combination of ride quality, usable power, and range that lets you go further and faster.",
@@ -131,6 +135,7 @@ export const products: Product[] = [
     brand: 'Specialized',
     price: 7500,
     category: 'Gravel',
+    material: 'FACT 11r Carbon',
     image: 'https://images.unsplash.com/photo-1507035895480-2b3156c31fc8?q=80&w=800',
     images: ['https://images.unsplash.com/photo-1507035895480-2b3156c31fc8?q=80&w=800'],
     description: "With Future Shock suspension front and rear, the Diverge STR delivers compliance without compromise for the most rugged gravel adventures.",
