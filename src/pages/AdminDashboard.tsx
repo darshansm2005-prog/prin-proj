@@ -22,7 +22,9 @@ import {
   Search,
   LayoutDashboard,
   Loader2,
-  Tag
+  Tag,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { 
   Table, 
@@ -67,13 +69,14 @@ const AdminDashboard = () => {
     description: '',
     image: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?q=80&w=800',
     isSale: false,
-    salePrice: ''
+    salePrice: '',
+    isHidden: false
   });
 
   useEffect(() => {
     const loadInventory = async () => {
       setIsLoading(true);
-      const data = await fetchProducts();
+      const data = await fetchProducts(true); // Include hidden products for admin
       setInventory(data);
       setIsLoading(false);
     };
@@ -109,6 +112,24 @@ const AdminDashboard = () => {
     toast.error("Product removed from inventory");
   };
 
+  const handleToggleHide = async (product: Product) => {
+    const newHiddenStatus = !product.isHidden;
+    const { error } = await supabase
+      .from('products')
+      .update({ is_hidden: newHiddenStatus })
+      .eq('id', product.id);
+
+    if (error) {
+      toast.error("Failed to update visibility");
+      return;
+    }
+
+    setInventory(prev => prev.map(p => 
+      p.id === product.id ? { ...p, isHidden: newHiddenStatus } : p
+    ));
+    toast.success(newHiddenStatus ? "Product hidden from shop" : "Product visible in shop");
+  };
+
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -123,6 +144,7 @@ const AdminDashboard = () => {
       images: [newProduct.image],
       is_sale: newProduct.isSale,
       sale_price: newProduct.isSale ? Number(newProduct.salePrice) : null,
+      is_hidden: newProduct.isHidden,
       rating: 5.0,
       reviews: 0,
       specs: {
@@ -146,7 +168,8 @@ const AdminDashboard = () => {
       const addedProduct = {
         ...data[0],
         isSale: data[0].is_sale,
-        salePrice: data[0].sale_price
+        salePrice: data[0].sale_price,
+        isHidden: data[0].is_hidden
       } as Product;
       
       setInventory([addedProduct, ...inventory]);
@@ -160,7 +183,8 @@ const AdminDashboard = () => {
         description: '',
         image: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?q=80&w=800',
         isSale: false,
-        salePrice: ''
+        salePrice: '',
+        isHidden: false
       });
       toast.success(`${addedProduct.name} added to inventory!`);
     }
@@ -168,7 +192,7 @@ const AdminDashboard = () => {
 
   const stats = [
     { label: "Total Products", value: inventory.length, icon: Package, color: "text-blue-600" },
-    { label: "Low Stock Items", value: inventory.filter(p => p.stock < 5).length, icon: AlertCircle, color: "text-red-600" },
+    { label: "Hidden Items", value: inventory.filter(p => p.isHidden).length, icon: EyeOff, color: "text-zinc-600" },
     { label: "Total Value", value: `$${inventory.reduce((acc, p) => acc + (p.price * p.stock), 0).toLocaleString()}`, icon: TrendingUp, color: "text-green-600" },
   ];
 
@@ -289,6 +313,18 @@ const AdminDashboard = () => {
                   )}
                 </div>
 
+                <div className="flex items-center justify-between p-4 bg-zinc-50 rounded-2xl border border-zinc-100">
+                  <div className="flex items-center gap-2">
+                    <EyeOff className="h-4 w-4 text-zinc-500" />
+                    <Label htmlFor="isHidden" className="font-bold">Hide from Shop?</Label>
+                  </div>
+                  <Switch 
+                    id="isHidden" 
+                    checked={newProduct.isHidden}
+                    onCheckedChange={(checked) => setNewProduct({...newProduct, isHidden: checked})}
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="image">Image URL</Label>
                   <Input 
@@ -366,7 +402,7 @@ const AdminDashboard = () => {
                     <TableHead className="font-bold">Category</TableHead>
                     <TableHead className="font-bold">Price</TableHead>
                     <TableHead className="font-bold">Stock</TableHead>
-                    <TableHead className="font-bold">Status</TableHead>
+                    <TableHead className="font-bold">Visibility</TableHead>
                     <TableHead className="text-right font-bold">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -406,11 +442,18 @@ const AdminDashboard = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {product.stock > 0 ? (
-                          <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none font-bold">Active</Badge>
-                        ) : (
-                          <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-none font-bold">Out of Stock</Badge>
-                        )}
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className={product.isHidden ? "text-zinc-400" : "text-green-600"}
+                          onClick={() => handleToggleHide(product)}
+                        >
+                          {product.isHidden ? (
+                            <><EyeOff className="h-4 w-4 mr-2" /> Hidden</>
+                          ) : (
+                            <><Eye className="h-4 w-4 mr-2" /> Visible</>
+                          )}
+                        </Button>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">

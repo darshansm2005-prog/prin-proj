@@ -17,31 +17,40 @@ export interface Product {
   isSale?: boolean;
   salePrice?: number;
   stock: number;
+  isHidden?: boolean;
   created_at?: string;
 }
 
-export const fetchProducts = async (): Promise<Product[]> => {
-  const { data, error } = await supabase
+export const fetchProducts = async (includeHidden = false): Promise<Product[]> => {
+  let query = supabase
     .from('products')
     .select('*')
     .order('created_at', { ascending: false });
+
+  if (!includeHidden) {
+    query = query.eq('is_hidden', false);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('Error fetching products:', error);
     return [];
   }
 
-  if (!data || data.length === 0) return products;
+  if (!data || data.length === 0) {
+    return includeHidden ? products : products.filter(p => !p.isHidden);
+  }
 
   return data.map((p: any) => ({
     ...p,
     isSale: p.is_sale,
-    salePrice: p.sale_price
+    salePrice: p.sale_price,
+    isHidden: p.is_hidden
   })) as Product[];
 };
 
 export const fetchProductById = async (id: string): Promise<Product | null> => {
-  // Check fallback first for demo purposes
   const fallback = products.find(p => p.id === id);
   if (fallback) return fallback;
 
@@ -60,7 +69,8 @@ export const fetchProductById = async (id: string): Promise<Product | null> => {
   return {
     ...p,
     isSale: p.is_sale,
-    salePrice: p.sale_price
+    salePrice: p.sale_price,
+    isHidden: p.is_hidden
   } as Product;
 };
 
@@ -82,7 +92,8 @@ export const products: Product[] = [
     reviews: 42,
     stock: 3,
     isSale: true,
-    salePrice: 10500
+    salePrice: 10500,
+    isHidden: false
   },
   {
     id: '2',
@@ -96,7 +107,8 @@ export const products: Product[] = [
     specs: { "Frame": "Tarmac SL8 FACT 10r Carbon", "Groupset": "Shimano Ultegra Di2", "Wheels": "Roval Rapide CL II" },
     rating: 4.8,
     reviews: 85,
-    stock: 5
+    stock: 5,
+    isHidden: false
   },
   {
     id: '3',
@@ -110,7 +122,8 @@ export const products: Product[] = [
     specs: { "Motor": "Specialized 2.2", "Battery": "700Wh", "Frame": "M5 Premium Alloy" },
     rating: 4.7,
     reviews: 64,
-    stock: 8
+    stock: 8,
+    isHidden: false
   },
   {
     id: '4',
@@ -124,6 +137,7 @@ export const products: Product[] = [
     specs: { "Frame": "Diverge FACT 11r Carbon", "Suspension": "Future Shock 3.3", "Groupset": "SRAM Rival eTap AXS" },
     rating: 4.9,
     reviews: 28,
-    stock: 4
+    stock: 4,
+    isHidden: false
   }
 ];
