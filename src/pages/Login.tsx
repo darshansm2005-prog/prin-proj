@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
@@ -13,7 +13,7 @@ const Login = () => {
   const { isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (!loading && isAuthenticated) {
       navigate('/');
     }
