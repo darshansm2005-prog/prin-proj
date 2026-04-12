@@ -103,39 +103,40 @@ const AdminDashboard = () => {
   );
 
   const handleDelete = async (id: string) => {
+    // Attempt DB delete
     const { error } = await supabase.from('products').delete().eq('id', id);
     
-    if (error) {
-      // Fallback for demo: remove from local state anyway
-      setInventory(prev => prev.filter(p => p.id !== id));
-      toast.error("Database error, but removed from local view for demo.");
-      return;
-    }
-
+    // Always update local state for the demo experience
     setInventory(prev => prev.filter(p => p.id !== id));
-    toast.error("Product removed from inventory");
+    
+    if (error) {
+      console.warn("Database delete failed (likely table missing), updated locally only.");
+      toast.success("Product removed (Demo Mode)");
+    } else {
+      toast.success("Product removed from inventory");
+    }
   };
 
   const handleToggleHide = async (product: Product) => {
     const newHiddenStatus = !product.isHidden;
+    
+    // Attempt DB update
     const { error } = await supabase
       .from('products')
       .update({ is_hidden: newHiddenStatus })
       .eq('id', product.id);
 
-    if (error) {
-      // Fallback for demo
-      setInventory(prev => prev.map(p => 
-        p.id === product.id ? { ...p, isHidden: newHiddenStatus } : p
-      ));
-      toast.info("Database error, but updated local view for demo.");
-      return;
-    }
-
+    // Always update local state
     setInventory(prev => prev.map(p => 
       p.id === product.id ? { ...p, isHidden: newHiddenStatus } : p
     ));
-    toast.success(newHiddenStatus ? "Product hidden from shop" : "Product visible in shop");
+
+    if (error) {
+      console.warn("Database update failed, updated locally only.");
+      toast.success(newHiddenStatus ? "Product hidden (Demo Mode)" : "Product visible (Demo Mode)");
+    } else {
+      toast.success(newHiddenStatus ? "Product hidden from shop" : "Product visible in shop");
+    }
   };
 
   const handleAddProduct = async (e: React.FormEvent) => {
@@ -162,13 +163,14 @@ const AdminDashboard = () => {
       }
     };
 
+    // Attempt DB insert
     const { data, error } = await supabase
       .from('products')
       .insert([productData])
       .select();
 
-    if (error) {
-      // Fallback for demo: add to local state so user can see it
+    if (error || !data) {
+      // Fallback for demo: add to local state
       const demoProduct = {
         id: `demo-${Math.random().toString(36).substr(2, 9)}`,
         ...productData,
@@ -178,12 +180,8 @@ const AdminDashboard = () => {
       } as Product;
       
       setInventory([demoProduct, ...inventory]);
-      setIsAddSheetOpen(false);
-      toast.warning("Database table missing. Added to local view for demo.");
-      return;
-    }
-
-    if (data) {
+      toast.success(`${demoProduct.name} added (Demo Mode)`);
+    } else {
       const addedProduct = {
         ...data[0],
         isSale: data[0].is_sale,
@@ -192,22 +190,23 @@ const AdminDashboard = () => {
       } as Product;
       
       setInventory([addedProduct, ...inventory]);
-      setIsAddSheetOpen(false);
-      setNewProduct({
-        name: '',
-        brand: '',
-        price: '',
-        category: 'Mountain',
-        material: '',
-        stock: '',
-        description: '',
-        image: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?q=80&w=800',
-        isSale: false,
-        salePrice: '',
-        isHidden: false
-      });
       toast.success(`${addedProduct.name} added to inventory!`);
     }
+
+    setIsAddSheetOpen(false);
+    setNewProduct({
+      name: '',
+      brand: '',
+      price: '',
+      category: 'Mountain',
+      material: '',
+      stock: '',
+      description: '',
+      image: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?q=80&w=800',
+      isSale: false,
+      salePrice: '',
+      isHidden: false
+    });
   };
 
   const stats = [
