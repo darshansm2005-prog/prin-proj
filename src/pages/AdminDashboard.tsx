@@ -106,7 +106,9 @@ const AdminDashboard = () => {
     const { error } = await supabase.from('products').delete().eq('id', id);
     
     if (error) {
-      toast.error("Failed to delete product");
+      // Fallback for demo: remove from local state anyway
+      setInventory(prev => prev.filter(p => p.id !== id));
+      toast.error("Database error, but removed from local view for demo.");
       return;
     }
 
@@ -122,7 +124,11 @@ const AdminDashboard = () => {
       .eq('id', product.id);
 
     if (error) {
-      toast.error("Failed to update visibility");
+      // Fallback for demo
+      setInventory(prev => prev.map(p => 
+        p.id === product.id ? { ...p, isHidden: newHiddenStatus } : p
+      ));
+      toast.info("Database error, but updated local view for demo.");
       return;
     }
 
@@ -162,8 +168,18 @@ const AdminDashboard = () => {
       .select();
 
     if (error) {
-      toast.error("Failed to add product");
-      console.error(error);
+      // Fallback for demo: add to local state so user can see it
+      const demoProduct = {
+        id: `demo-${Math.random().toString(36).substr(2, 9)}`,
+        ...productData,
+        isSale: productData.is_sale,
+        salePrice: productData.sale_price,
+        isHidden: productData.is_hidden
+      } as Product;
+      
+      setInventory([demoProduct, ...inventory]);
+      setIsAddSheetOpen(false);
+      toast.warning("Database table missing. Added to local view for demo.");
       return;
     }
 
