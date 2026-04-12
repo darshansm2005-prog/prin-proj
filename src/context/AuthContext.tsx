@@ -17,6 +17,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const MOCK_USER_KEY = 'trysycle_mock_user';
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = React.useState<User | null>(null);
   const [session, setSession] = React.useState<Session | null>(null);
@@ -25,6 +27,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   React.useEffect(() => {
     const initAuth = async () => {
       try {
+        // Check for mock user first (for demo purposes)
+        const savedMockUser = localStorage.getItem(MOCK_USER_KEY);
+        if (savedMockUser) {
+          const parsedUser = JSON.parse(savedMockUser);
+          setUser(parsedUser);
+          setLoading(false);
+          return;
+        }
+
+        // Otherwise check real Supabase session
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) throw error;
         
@@ -45,7 +57,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (session) {
         setSession(session);
         setUser(session.user);
-      } else {
+        localStorage.removeItem(MOCK_USER_KEY); // Clear mock if real login happens
+      } else if (!localStorage.getItem(MOCK_USER_KEY)) {
         setSession(null);
         setUser(null);
       }
@@ -60,6 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await supabase.auth.signOut();
       setUser(null);
       setSession(null);
+      localStorage.removeItem(MOCK_USER_KEY);
       toast.info("Logged out successfully");
     } catch (error) {
       toast.error("Error signing out");
@@ -67,18 +81,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const devLogin = () => {
-    // Mock user for development bypass
     const mockUser = {
       id: 'dev-admin-id',
-      email: 'admin-bypass@test.com',
+      email: 'admin@trysycle.com',
       app_metadata: { role: 'admin' },
-      user_metadata: {},
+      user_metadata: { full_name: 'Demo Admin' },
       aud: 'authenticated',
       created_at: new Date().toISOString()
     } as User;
     
+    localStorage.setItem(MOCK_USER_KEY, JSON.stringify(mockUser));
     setUser(mockUser);
-    toast.success("Dev Mode: Logged in as Admin");
+    toast.success("Demo Mode: Logged in as Admin");
   };
 
   const isAuthenticated = !!user;
