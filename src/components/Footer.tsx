@@ -67,7 +67,7 @@ const Footer = () => {
         </div>
 
         <div className="pt-8 border-t border-zinc-900 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-zinc-500">
-          <p>© 2024 TRYsycle. All rights reserved.</p>
+          <p>© 2026 TRYsycle. All rights reserved.</p>
           <div className="flex gap-8">
             <a href="#" className="hover:text-white">Privacy Policy</a>
             <a href="#" className="hover:text-white">Terms of Service</a>
