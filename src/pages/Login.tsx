@@ -30,12 +30,8 @@ const Login = () => {
     setIsSubmitting(true);
 
     try {
-      if (isLogin) {
-        await login(email, password);
-      } else {
-        // Registration logic would go here for real Supabase
-        toast.info("Registration is currently disabled in demo mode.");
-      }
+      // Both login and signup use the same mock logic for the demo
+      await login(email, password);
     } catch (error: any) {
       toast.error(error.message || "Authentication failed");
     } finally {

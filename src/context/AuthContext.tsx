@@ -84,9 +84,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    // Fallback to real Supabase auth
-    const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
-    if (error) throw error;
+    // For any other credentials, simulate a normal user login
+    const mockUser = {
+      id: `demo-user-${Math.random().toString(36).substr(2, 9)}`,
+      email: email,
+      app_metadata: { role: 'user' },
+      user_metadata: { full_name: email.split('@')[0] },
+      aud: 'authenticated',
+      created_at: new Date().toISOString()
+    } as User;
+    
+    localStorage.setItem(MOCK_USER_KEY, JSON.stringify(mockUser));
+    setUser(mockUser);
+    
+    // Simulate sending a message to mail
+    toast.info(`Login notification sent to ${email}`);
+    toast.success("Logged in successfully (No confirmation required)");
   };
 
   const logout = async () => {
