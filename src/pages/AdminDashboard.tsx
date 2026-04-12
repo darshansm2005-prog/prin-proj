@@ -78,7 +78,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     const loadInventory = async () => {
       setIsLoading(true);
-      const data = await fetchProducts(true); // Include hidden products for admin
+      const data = await fetchProducts(true);
       setInventory(data);
       setIsLoading(false);
     };
@@ -103,40 +103,33 @@ const AdminDashboard = () => {
   );
 
   const handleDelete = async (id: string) => {
-    // Attempt DB delete
     const { error } = await supabase.from('products').delete().eq('id', id);
     
-    // Always update local state for the demo experience
-    setInventory(prev => prev.filter(p => p.id !== id));
-    
     if (error) {
-      console.warn("Database delete failed (likely table missing), updated locally only.");
-      toast.success("Product removed (Demo Mode)");
-    } else {
-      toast.success("Product removed from inventory");
+      toast.error(`Database Error: ${error.message}`);
+      return;
     }
+
+    setInventory(prev => prev.filter(p => p.id !== id));
+    toast.success("Product permanently removed from database");
   };
 
   const handleToggleHide = async (product: Product) => {
     const newHiddenStatus = !product.isHidden;
-    
-    // Attempt DB update
     const { error } = await supabase
       .from('products')
       .update({ is_hidden: newHiddenStatus })
       .eq('id', product.id);
 
-    // Always update local state
+    if (error) {
+      toast.error(`Failed to update visibility: ${error.message}`);
+      return;
+    }
+
     setInventory(prev => prev.map(p => 
       p.id === product.id ? { ...p, isHidden: newHiddenStatus } : p
     ));
-
-    if (error) {
-      console.warn("Database update failed, updated locally only.");
-      toast.success(newHiddenStatus ? "Product hidden (Demo Mode)" : "Product visible (Demo Mode)");
-    } else {
-      toast.success(newHiddenStatus ? "Product hidden from shop" : "Product visible in shop");
-    }
+    toast.success(newHiddenStatus ? "Product is now hidden" : "Product is now visible");
   };
 
   const handleAddProduct = async (e: React.FormEvent) => {
@@ -163,25 +156,17 @@ const AdminDashboard = () => {
       }
     };
 
-    // Attempt DB insert
     const { data, error } = await supabase
       .from('products')
       .insert([productData])
       .select();
 
-    if (error || !data) {
-      // Fallback for demo: add to local state
-      const demoProduct = {
-        id: `demo-${Math.random().toString(36).substr(2, 9)}`,
-        ...productData,
-        isSale: productData.is_sale,
-        salePrice: productData.sale_price,
-        isHidden: productData.is_hidden
-      } as Product;
-      
-      setInventory([demoProduct, ...inventory]);
-      toast.success(`${demoProduct.name} added (Demo Mode)`);
-    } else {
+    if (error) {
+      toast.error(`Failed to add product: ${error.message}`);
+      return;
+    }
+
+    if (data && data[0]) {
       const addedProduct = {
         ...data[0],
         isSale: data[0].is_sale,
@@ -190,23 +175,22 @@ const AdminDashboard = () => {
       } as Product;
       
       setInventory([addedProduct, ...inventory]);
-      toast.success(`${addedProduct.name} added to inventory!`);
+      setIsAddSheetOpen(false);
+      setNewProduct({
+        name: '',
+        brand: '',
+        price: '',
+        category: 'Mountain',
+        material: '',
+        stock: '',
+        description: '',
+        image: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?q=80&w=800',
+        isSale: false,
+        salePrice: '',
+        isHidden: false
+      });
+      toast.success(`${addedProduct.name} successfully saved to database!`);
     }
-
-    setIsAddSheetOpen(false);
-    setNewProduct({
-      name: '',
-      brand: '',
-      price: '',
-      category: 'Mountain',
-      material: '',
-      stock: '',
-      description: '',
-      image: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?q=80&w=800',
-      isSale: false,
-      salePrice: '',
-      isHidden: false
-    });
   };
 
   const stats = [
@@ -223,7 +207,7 @@ const AdminDashboard = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
           <div>
             <h1 className="text-4xl font-black tracking-tighter text-zinc-900 mb-2">ADMIN CONSOLE</h1>
-            <p className="text-zinc-500">Manage your inventory, stock levels, and product details.</p>
+            <p className="text-zinc-500">Manage your real-time inventory and product database.</p>
           </div>
 
           <Sheet open={isAddSheetOpen} onOpenChange={setIsAddSheetOpen}>
@@ -383,7 +367,7 @@ const AdminDashboard = () => {
                   <SheetClose asChild>
                     <Button type="button" variant="outline" className="flex-1 h-12 rounded-xl font-bold">Cancel</Button>
                   </SheetClose>
-                  <Button type="submit" className="flex-1 bg-orange-600 hover:bg-orange-700 h-12 rounded-xl font-bold">Save Product</Button>
+                  <Button type="submit" className="flex-1 bg-orange-600 hover:bg-orange-700 h-12 rounded-xl font-bold">Save to Database</Button>
                 </div>
               </form>
             </SheetContent>
@@ -409,12 +393,12 @@ const AdminDashboard = () => {
         <div className="bg-white rounded-3xl border border-zinc-100 shadow-sm overflow-hidden">
           <div className="p-6 border-b border-zinc-100 flex flex-col sm:flex-row justify-between items-center gap-4">
             <h2 className="text-xl font-bold flex items-center gap-2">
-              <LayoutDashboard className="h-5 w-5 text-orange-600" /> Product Inventory
+              <LayoutDashboard className="h-5 w-5 text-orange-600" /> Live Inventory
             </h2>
             <div className="relative w-full sm:w-72">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
               <Input 
-                placeholder="Search inventory..." 
+                placeholder="Search database..." 
                 className="pl-10 rounded-xl border-zinc-200"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -516,7 +500,7 @@ const AdminDashboard = () => {
           
           {!isLoading && filteredProducts.length === 0 && (
             <div className="py-12 text-center text-zinc-500">
-              No products found matching your search.
+              No products found in database.
             </div>
           )}
         </div>
