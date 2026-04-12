@@ -45,7 +45,7 @@ const Index = () => {
           {[
             { 
               name: 'Mountain', 
-              img: 'https://images.unsplash.com/photo-1532298229144-0ee0c9e9ad58?q=80&w=1200&auto=format&fit=crop', 
+              img: '/categories/mountain.png', 
               count: '45 Models' 
             },
             { 
