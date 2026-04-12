@@ -43,16 +43,32 @@ const Index = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
-            { name: 'Mountain', img: 'https://images.unsplash.com/photo-1576433733026-d3f5ee6693c7?q=80&w=800', count: '45 Models' },
-            { name: 'Road', img: 'https://images.unsplash.com/photo-1511994298241-608e28f14f66?q=80&w=800', count: '32 Models' },
-            { name: 'Electric', img: 'https://images.unsplash.com/photo-1593764592116-bfb2a97c642a?q=80&w=800', count: '18 Models' }
+            { 
+              name: 'Mountain', 
+              img: 'https://images.unsplash.com/photo-1532298229144-0ee0c9e9ad58?q=80&w=1200&auto=format&fit=crop', 
+              count: '45 Models' 
+            },
+            { 
+              name: 'Road', 
+              img: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?q=80&w=1200&auto=format&fit=crop', 
+              count: '32 Models' 
+            },
+            { 
+              name: 'Electric', 
+              img: 'https://images.unsplash.com/photo-1593764592116-bfb2a97c642a?q=80&w=1200&auto=format&fit=crop', 
+              count: '18 Models' 
+            }
           ].map((cat, i) => (
             <Link 
               key={i} 
               to={`/shop?category=${cat.name}`}
-              className="group relative h-[400px] rounded-3xl overflow-hidden"
+              className="group relative h-[400px] rounded-3xl overflow-hidden bg-zinc-100"
             >
-              <img src={cat.img} alt={cat.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+              <img 
+                src={cat.img} 
+                alt={cat.name} 
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-transparent to-transparent" />
               <div className="absolute bottom-8 left-8">
                 <h3 className="text-3xl font-black text-white mb-1">{cat.name}</h3>
