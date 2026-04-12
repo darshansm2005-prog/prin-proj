@@ -8,8 +8,8 @@ import { toast } from 'sonner';
 interface AuthContextType {
   user: User | null;
   session: Session | null;
+  login: (email: string, pass: string) => Promise<void>;
   logout: () => Promise<void>;
-  devLogin: () => void;
   isAuthenticated: boolean;
   isAdmin: boolean;
   loading: boolean;
@@ -27,7 +27,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   React.useEffect(() => {
     const initAuth = async () => {
       try {
-        // Check for mock user first (for demo purposes)
         const savedMockUser = localStorage.getItem(MOCK_USER_KEY);
         if (savedMockUser) {
           const parsedUser = JSON.parse(savedMockUser);
@@ -36,7 +35,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return;
         }
 
-        // Otherwise check real Supabase session
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) throw error;
         
@@ -57,7 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (session) {
         setSession(session);
         setUser(session.user);
-        localStorage.removeItem(MOCK_USER_KEY); // Clear mock if real login happens
+        localStorage.removeItem(MOCK_USER_KEY);
       } else if (!localStorage.getItem(MOCK_USER_KEY)) {
         setSession(null);
         setUser(null);
@@ -67,6 +65,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const login = async (email: string, pass: string) => {
+    // Check for specific admin credentials
+    if (email === 'admin@test.com' && pass === 'admin123') {
+      const mockUser = {
+        id: 'demo-admin-id',
+        email: 'admin@test.com',
+        app_metadata: { role: 'admin' },
+        user_metadata: { full_name: 'System Admin' },
+        aud: 'authenticated',
+        created_at: new Date().toISOString()
+      } as User;
+      
+      localStorage.setItem(MOCK_USER_KEY, JSON.stringify(mockUser));
+      setUser(mockUser);
+      toast.success("Logged in as Admin");
+      return;
+    }
+
+    // Fallback to real Supabase auth
+    const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
+    if (error) throw error;
+  };
 
   const logout = async () => {
     try {
@@ -80,26 +101,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const devLogin = () => {
-    const mockUser = {
-      id: 'dev-admin-id',
-      email: 'admin@trysycle.com',
-      app_metadata: { role: 'admin' },
-      user_metadata: { full_name: 'Demo Admin' },
-      aud: 'authenticated',
-      created_at: new Date().toISOString()
-    } as User;
-    
-    localStorage.setItem(MOCK_USER_KEY, JSON.stringify(mockUser));
-    setUser(mockUser);
-    toast.success("Demo Mode: Logged in as Admin");
-  };
-
   const isAuthenticated = !!user;
   const isAdmin = user?.email?.includes('admin') || user?.app_metadata?.role === 'admin';
 
   return (
-    <AuthContext.Provider value={{ user, session, logout, devLogin, isAuthenticated, isAdmin, loading }}>
+    <AuthContext.Provider value={{ user, session, login, logout, isAuthenticated, isAdmin, loading }}>
       {children}
     </AuthContext.Provider>
   );
