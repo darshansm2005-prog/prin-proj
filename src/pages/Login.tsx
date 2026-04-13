@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 
 const Login = () => {
-  const { isAuthenticated, loading, login } = useAuth();
+  const { isAuthenticated, loading, login, signup } = useAuth();
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
@@ -30,10 +30,13 @@ const Login = () => {
     setIsSubmitting(true);
 
     try {
-      // Both login and signup use the same mock logic for the demo
-      await login(email, password);
+      if (isLogin) {
+        await login(email, password);
+      } else {
+        await signup(email, password);
+      }
     } catch (error: any) {
-      toast.error(error.message || "Authentication failed");
+      // Error is handled in context
     } finally {
       setIsSubmitting(false);
     }

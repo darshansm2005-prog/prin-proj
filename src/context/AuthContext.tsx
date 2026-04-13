@@ -9,6 +9,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   login: (email: string, pass: string) => Promise<void>;
+  signup: (email: string, pass: string) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   isAdmin: boolean;
@@ -17,24 +18,14 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const MOCK_USER_KEY = 'trysycle_mock_user';
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = React.useState<User | null>(null);
-  const [session, setSession] = React.useState<Session | null>(null);
-  const [loading, setLoading] = React.useState(true);
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const initAuth = async () => {
       try {
-        const savedMockUser = localStorage.getItem(MOCK_USER_KEY);
-        if (savedMockUser) {
-          const parsedUser = JSON.parse(savedMockUser);
-          setUser(parsedUser);
-          setLoading(false);
-          return;
-        }
-
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) throw error;
         
@@ -52,14 +43,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        setSession(session);
-        setUser(session.user);
-        localStorage.removeItem(MOCK_USER_KEY);
-      } else if (!localStorage.getItem(MOCK_USER_KEY)) {
-        setSession(null);
-        setUser(null);
-      }
+      setSession(session);
+      setUser(session?.user ?? null);
       setLoading(false);
     });
 
@@ -67,47 +52,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (email: string, pass: string) => {
-    // Check for specific admin credentials
-    if (email === 'admin@test.com' && pass === 'admin123') {
-      const mockUser = {
-        id: 'demo-admin-id',
-        email: 'admin@test.com',
-        app_metadata: { role: 'admin' },
-        user_metadata: { full_name: 'System Admin' },
-        aud: 'authenticated',
-        created_at: new Date().toISOString()
-      } as User;
-      
-      localStorage.setItem(MOCK_USER_KEY, JSON.stringify(mockUser));
-      setUser(mockUser);
-      toast.success("Logged in as Admin");
-      return;
-    }
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password: pass,
+    });
 
-    // For any other credentials, simulate a normal user login
-    const mockUser = {
-      id: `demo-user-${Math.random().toString(36).substr(2, 9)}`,
-      email: email,
-      app_metadata: { role: 'user' },
-      user_metadata: { full_name: email.split('@')[0] },
-      aud: 'authenticated',
-      created_at: new Date().toISOString()
-    } as User;
+    if (error) {
+      toast.error(error.message);
+      throw error;
+    }
     
-    localStorage.setItem(MOCK_USER_KEY, JSON.stringify(mockUser));
-    setUser(mockUser);
+    toast.success("Logged in successfully");
+  };
+
+  const signup = async (email: string, pass: string) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password: pass,
+    });
+
+    if (error) {
+      toast.error(error.message);
+      throw error;
+    }
     
-    // Simulate sending a message to mail
-    toast.info(`Login notification sent to ${email}`);
-    toast.success("Logged in successfully (No confirmation required)");
+    toast.success("Check your email for the confirmation link!");
   };
 
   const logout = async () => {
     try {
       await supabase.auth.signOut();
-      setUser(null);
-      setSession(null);
-      localStorage.removeItem(MOCK_USER_KEY);
       toast.info("Logged out successfully");
     } catch (error) {
       toast.error("Error signing out");
@@ -115,10 +89,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const isAuthenticated = !!user;
+  // For this demo, we'll consider any user with 'admin' in their email as an admin
   const isAdmin = user?.email?.includes('admin') || user?.app_metadata?.role === 'admin';
 
   return (
-    <AuthContext.Provider value={{ user, session, login, logout, isAuthenticated, isAdmin, loading }}>
+    <AuthContext.Provider value={{ user, session, login, signup, logout, isAuthenticated, isAdmin, loading }}>
       {children}
     </AuthContext.Provider>
   );
