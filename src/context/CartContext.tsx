@@ -1,8 +1,9 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { Product } from '@/data/products';
 import { toast } from 'sonner';
+import { useAuth } from './AuthContext';
 
 interface CartItem extends Product {
   quantity: number;
@@ -22,8 +23,20 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const { user } = useAuth();
 
   const addToCart = (product: Product) => {
+    if (!user) {
+      toast.error("Please login to add items to your cart", {
+        description: "You need an account to save your selection and checkout.",
+        action: {
+          label: "Login",
+          onClick: () => window.location.href = "/login"
+        }
+      });
+      return;
+    }
+
     setCart(prev => {
       const existing = prev.find(item => item.id === product.id);
       if (existing) {
