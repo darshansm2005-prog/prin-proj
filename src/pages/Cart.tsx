@@ -112,8 +112,10 @@ const Cart = () => {
                 </div>
               </div>
               
-              <Button className="w-full bg-orange-600 hover:bg-orange-700 h-14 rounded-2xl text-lg font-bold">
-                Checkout <ArrowRight className="ml-2 h-5 w-5" />
+              <Button asChild className="w-full bg-orange-600 hover:bg-orange-700 h-14 rounded-2xl text-lg font-bold">
+                <Link to="/checkout">
+                  Checkout <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
               </Button>
               
               <p className="text-center text-xs text-zinc-500 mt-6">
