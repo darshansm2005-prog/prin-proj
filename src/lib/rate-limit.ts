@@ -11,9 +11,11 @@ export const rateLimit = async (action: string, key: string, limit: number, ttl:
   const currentTime = Math.floor(Date.now() / 1000);
   const lastAccessTime = get(rateLimitStore, digest, 0);
 
-  if (currentTime - last AccessTime < ttl) {
+  // If the time since the last request is less than the TTL, block the request
+  if (currentTime - lastAccessTime < ttl) {
     throw new Error('Too many requests. Please try again later.');
   }
 
+  // Record the timestamp of this request
   set(rateLimitStore, digest, currentTime);
 };
