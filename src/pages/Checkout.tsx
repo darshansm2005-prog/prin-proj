@@ -7,15 +7,27 @@ import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Bike, ChevronLeft, CreditCard, Truck, ShieldCheck, Loader2 } from 'lucide-react';
+import { 
+  Bike, 
+  ChevronLeft, 
+  CreditCard, 
+  Truck, 
+  ShieldCheck, 
+  Loader2,
+  Wallet
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { cn } from '@/lib/utils';
+
+type PaymentMethod = 'card' | 'paypal' | 'apple' | 'google';
 
 const Checkout = () => {
   const { cart, cartTotal, clearCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('card');
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -35,7 +47,6 @@ const Checkout = () => {
     }
 
     setIsProcessing(true);
-    console.log("[Checkout] Starting order process for user:", user.id);
     
     try {
       // 1. Create the order
@@ -50,16 +61,8 @@ const Checkout = () => {
         .select()
         .single();
 
-      if (orderError) {
-        console.error("[Checkout] Order creation error:", orderError);
-        throw new Error(`Order failed: ${orderError.message}`);
-      }
-
-      if (!order) {
-        throw new Error("Order was created but no data was returned. Check database policies.");
-      }
-
-      console.log("[Checkout] Order created successfully:", order.id);
+      if (orderError) throw new Error(`Order failed: ${orderError.message}`);
+      if (!order) throw new Error("Order creation failed.");
 
       // 2. Create order items
       const orderItems = cart.map(item => ({
@@ -75,19 +78,13 @@ const Checkout = () => {
         .from('order_items')
         .insert(orderItems);
 
-      if (itemsError) {
-        console.error("[Checkout] Order items error:", itemsError);
-        throw new Error(`Failed to save items: ${itemsError.message}`);
-      }
-
-      console.log("[Checkout] Order items saved successfully");
+      if (itemsError) throw new Error(`Failed to save items: ${itemsError.message}`);
 
       toast.success("Order placed successfully!");
       clearCart();
       navigate('/profile');
     } catch (error: any) {
-      console.error("[Checkout] Final catch error:", error);
-      toast.error(error.message || "Failed to process order. Please try again.");
+      toast.error(error.message || "Failed to process order.");
     } finally {
       setIsProcessing(false);
     }
@@ -169,31 +166,64 @@ const Checkout = () => {
 
             <section className="bg-white p-8 rounded-3xl border border-zinc-100 shadow-sm">
               <h2 className="text-2xl font-black mb-6 flex items-center gap-2">
-                <CreditCard className="h-6 w-6 text-orange-600" /> Payment Method
+                <Wallet className="h-6 w-6 text-orange-600" /> Payment Method
               </h2>
-              <div className="space-y-4">
-                <div className="p-4 border-2 border-orange-600 bg-orange-50 rounded-2xl flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-14 bg-zinc-900 rounded-md flex items-center justify-center text-white font-bold text-[10px]">VISA</div>
-                    <span className="font-bold">Credit / Debit Card</span>
-                  </div>
-                  <div className="h-5 w-5 rounded-full border-4 border-orange-600 bg-white" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="cardNumber">Card Number</Label>
-                  <Input id="cardNumber" placeholder="0000 0000 0000 0000" required className="rounded-xl" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="expiry">Expiry Date</Label>
-                    <Input id="expiry" placeholder="MM/YY" required className="rounded-xl" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="cvv">CVV</Label>
-                    <Input id="cvv" placeholder="123" required className="rounded-xl" />
-                  </div>
-                </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                {[
+                  { id: 'card', label: 'Credit Card', icon: CreditCard },
+                  { id: 'paypal', label: 'PayPal', icon: Wallet },
+                  { id: 'apple', label: 'Apple Pay', icon: Wallet },
+                  { id: 'google', label: 'Google Pay', icon: Wallet },
+                ].map((method) => (
+                  <button
+                    key={method.id}
+                    type="button"
+                    onClick={() => setSelectedPayment(method.id as PaymentMethod)}
+                    className={cn(
+                      "flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-left",
+                      selectedPayment === method.id 
+                        ? "border-orange-600 bg-orange-50" 
+                        : "border-zinc-100 hover:border-zinc-200 bg-white"
+                    )}
+                  >
+                    <div className={cn(
+                      "h-10 w-10 rounded-xl flex items-center justify-center",
+                      selectedPayment === method.id ? "bg-orange-600 text-white" : "bg-zinc-100 text-zinc-500"
+                    )}>
+                      <method.icon className="h-5 w-5" />
+                    </div>
+                    <span className="font-bold text-sm">{method.label}</span>
+                  </button>
+                ))}
               </div>
+
+              {selectedPayment === 'card' && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="space-y-2">
+                    <Label htmlFor="cardNumber">Card Number</Label>
+                    <Input id="cardNumber" placeholder="0000 0000 0000 0000" required className="rounded-xl" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="expiry">Expiry Date</Label>
+                      <Input id="expiry" placeholder="MM/YY" required className="rounded-xl" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="cvv">CVV</Label>
+                      <Input id="cvv" placeholder="123" required className="rounded-xl" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {selectedPayment !== 'card' && (
+                <div className="p-6 bg-zinc-50 rounded-2xl border border-dashed border-zinc-200 text-center animate-in fade-in slide-in-from-top-2 duration-300">
+                  <p className="text-sm text-zinc-500 font-medium">
+                    You will be redirected to {selectedPayment.charAt(0).toUpperCase() + selectedPayment.slice(1)} to complete your payment securely.
+                  </p>
+                </div>
+              )}
             </section>
           </div>
 
