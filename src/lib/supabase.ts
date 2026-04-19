@@ -8,16 +8,14 @@ export const USER_ROLES = {
   USER: 'user',
 };
 
-// Create RLS policies
-async function createRLSPolicies() {
+// Create RLS policiesasync function createRLSPolicies() {
   try {
-    // Enable RLS on products table
-    await supabase
+    // Enable RLS on products table    await supabase
      .from('products')
      .update({ is_hidden: false })
      .eq('is_hidden', true);
 
-    // Create RLS policies for products table
+    // Create policies for products table
     await supabase.rpc('rls_create_policy', {
       table: 'products',
       role: USER_ROLES.ADMIN,
@@ -31,8 +29,21 @@ async function createRLSPolicies() {
       policy: 'Users can access visible products',
       using: 'is_hidden = false',
     });
+    
+    // Create policies for audits table
+    await supabase.rpc('rls_create_policy', {
+      table: 'audits',
+      role: USER_ROLES.ADMIN,
+      policy: 'Admins can read all audits',
+      using: 'true',
+    });
 
-    console.log('RLS policies created successfully');
+    await supabase.rpc('rls_create_policy', {
+      table: 'audits',
+      role: USER_ROLES.USER,
+      policy: 'Users can read own audits',
+      using: 'auth.uid()::text = user_id::text',
+    });
   } catch (error) {
     console.error('Error creating RLS policies:', error);
   }

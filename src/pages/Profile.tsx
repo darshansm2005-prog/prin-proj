@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import Navbar from '@/components/Navbar';
@@ -16,21 +16,29 @@ import {
   Calendar, 
   CreditCard,
   Loader2,
-  ShoppingBag
+  ShoppingBag,
+  Switch
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useWishlist } from '@/context/WishlistContext';
+import { useCart } from '@/context/CartContext';
+import { logAudit } from '@/lib/auditLog';
 
 const Profile = () => {
-  const { user, logout, loading: authLoading } = useAuth();
+  const { user, logout, isAuthenticated, enable2FA, loading: authLoading } = useAuth();
   const [orders, setOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [is2FAToggleOpen, setIs2FAToggleOpen] = useState(false);
+  const [is2FAEnabled, setIs2FAEnabled] = useState(false);
+  const [is2FAVerifying, setIs2FAVerifying] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpError, setOtpError] = useState('');
 
   useEffect(() => {
     const fetchOrders = async () => {
       if (!user) return;
       
-      const { data, error } = await supabase
-        .from('orders')
+      const { data, error } = await supabase        .from('orders')
         .select('*, order_items(*)')
         .order('created_at', { ascending: false });
 
@@ -46,6 +54,86 @@ const Profile = () => {
   if (authLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
   if (!user) return <Navigate to="/login" replace />;
 
+  // Load 2FA status when component mounts
+  useEffect(() => {
+    const load2FAStatus = async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('is_2fa_enabled')
+        .eq('id', user.id)
+        .single();
+
+      if (!error && data) {
+        setIs2FAEnabled(data.is_2fa_enabled);
+      }
+    };
+    load2FAStatus();
+  }, [user]);
+
+  const handle2FAToggle = async () => {
+    if (is2FAVerifying) return;
+    
+    setIs2FAVerifying(true);
+    setOtpError('');
+    
+    // In a real implementation, we'd send the OTP to the user
+    // For this demo, we'll just toggle the state
+    await enable2FA(!is2FAEnabled);
+    setIs2FAVerifying(false);
+  };
+
+  const handleOTPSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!otpCode) return;
+    
+    const verified = await verify2FA(otpCode);
+    if (!verified) {
+      setOtpError('Invalid OTP code');
+    }
+  };
+
+  if (is2FAToggleOpen) {
+    return (
+      <div className="fixed inset-0 bg-white/90 backdrop-blur-xl flex items-center justify-center z-50">
+        <div className="bg-white rounded-3xl p-8 w-full max-w-md">
+          <h2 className="text-2xl font-bold mb-4">Enable Two-Factor Authentication</h2>
+          {otpError && <p className="text-red-600 mb-4">{otpError}</p>}
+          
+          <form onSubmit={handleOTPSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <label className="block text-sm font-medium">Enter OTP Code</label>
+              <input
+                type="text"
+                value={otpCode}
+                onChange={(e) => setOtpCode(e.target.value)}
+                placeholder="123456"
+                className="w-full rounded-xl bg-zinc-50 border border-zinc-200 text-zinc-900 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-600"
+                required
+              />
+            </div>
+            <Button 
+              type="submit" 
+              className="w-full bg-orange-600 hover:bg-orange-700 rounded-2xl h-12 font-bold"
+            >
+              Verify OTP
+            </Button>
+          </form>
+          
+          <div className="mt-6 flex justify-end">
+            <Button 
+              variant="outline" 
+              className="rounded-xl h-12 text-sm"
+              onClick={() => setIs2FAToggleOpen(false)}
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-zinc-50">
       <Navbar />
@@ -58,10 +146,28 @@ const Profile = () => {
               <div className="h-24 w-24 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <User className="h-12 w-12 text-orange-600" />
               </div>
-              <h2 className="text-xl font-black text-zinc-900 truncate">{user.email}</h2>
+              <h2 className="text-xl font-bold text-zinc-900 truncate">{user.email}</h2>
               <p className="text-sm text-zinc-500 mb-6">Member since {new Date(user.created_at).getFullYear()}</p>
-              <Button variant="outline" onClick={logout} className="w-full rounded-xl text-red-600 hover:bg-red-50 hover:text-red-700 border-red-100">
-                <LogOut className="mr-2 h-4 w-4" /> Logout
+              
+              {/* 2FA Toggle */}
+              <div className="flex items-center gap-3 mb-6">
+                <Switch                  id="2fa-switch"
+                  checked={is2FAEnabled}
+                  onCheckedChange={handle2FAToggle}
+                  className="relative inline-block h-6 w-11 rounded-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after: h-5 after:w-5 after:bg-white after:border-2 after:border-zinc-300 after:rounded-full after:transition-colors"
+                />
+                <span className="text-sm text-zinc-600">Two-Factor Authentication</span>
+              </div>
+              
+              {is2FAEnabled && (
+                <div className="space-y-2">
+                  <p className="text-sm text-green-600">Enabled</p>
+                  <p className="text-xs text-zinc-500">Your accounts are protected with an additional verification step</p>
+                </div>
+              )}
+              
+              <Button variant="outline" onClick={() => setIs2FAToggleOpen(true)} className="w-full rounded-xl text-red-600 hover:bg-red-50 hover:text-red-700 border-red-100">
+                {is2FAEnabled ? 'Disable' : 'Enable'} 2FA
               </Button>
             </div>
 
@@ -91,7 +197,7 @@ const Profile = () => {
           <div className="lg:col-span-3 space-y-8">
             <div className="flex justify-between items-end">
               <div>
-                <h1 className="text-4xl font-black tracking-tighter text-zinc-900">ORDER HISTORY</h1>
+                <h1 className="text-4xl font-black tracking-tighter text-zinc-900 mb-2">ORDER HISTORY</h1>
                 <p className="text-zinc-500">Track and manage your recent purchases.</p>
               </div>
             </div>
@@ -111,8 +217,9 @@ const Profile = () => {
                           </p>
                         </div>
                         <div>
-                          <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Total</p>
-                          <p className="text-sm font-black text-zinc-900">${order.total_amount.toLocaleString()}</p>
+                          <p className="text-sm font-bold flex items-center gap-2">
+                            <ShoppingBag className="h-3 w-3" /> {order.total_amount.toLocaleString()}
+                          </p>
                         </div>
                       </div>
                       <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none font-bold px-4 py-1 rounded-full">
