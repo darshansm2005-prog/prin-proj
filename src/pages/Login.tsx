@@ -8,12 +8,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { z } from 'zod';
+import { getCsrfToken, validateCsrfToken } from '@/lib/csrf';
+import { rateLimit } from '@/lib/rate-limit';
+
+const loginSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+});
 
 const Login = () => {
   const { login, signup, isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [csrfToken, setCsrfToken] = useState('');
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,12 +33,31 @@ const Login = () => {
     }
   }, [isAuthenticated, loading, navigate]);
 
+  React.useEffect(() => {
+    const fetchCsrfToken = async () => {
+      const token = await getCsrfToken();
+      setCsrfToken(token);
+    };
+
+    fetchCsrfToken();
+  }, []);
+
   const handleAuth = async (type: 'login' | 'signup') => {
     setIsSubmitting(true);
     try {
+      const result = loginSchema.safeParse({ email, password });
+      if (!result.success) {
+        toast.error(result.error.issues[0].message);
+        return;
+      }
+
+      await validateCsrfToken(csrfToken);
+
       if (type === 'login') {
+        await rateLimit('login', email, 5, 60);
         await login(email, password);
       } else {
+        await rateLimit('signup', email, 5, 60);
         await signup(email, password);
       }
     } catch (error) {
@@ -98,7 +126,7 @@ const Login = () => {
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
                   <Input 
                     id="password" 
-                    type={showPassword ? "text" : "password"} 
+                    type={showPassword? "text" : "password"} 
                     placeholder="••••••••" 
                     className="pl-11 pr-11 h-12 rounded-xl border-zinc-200 focus-visible:ring-orange-600"
                     value={password}
@@ -109,7 +137,7 @@ const Login = () => {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 transition-colors"
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showPassword? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
@@ -118,9 +146,9 @@ const Login = () => {
                 <Button 
                   className="w-full bg-zinc-900 hover:bg-orange-600 text-white h-14 rounded-2xl text-lg font-bold transition-all shadow-lg shadow-zinc-900/10"
                   onClick={() => handleAuth('login')}
-                  disabled={isSubmitting || !email || !password}
+                  disabled={isSubmitting ||!email ||!password}
                 >
-                  {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : "Sign In"}
+                  {isSubmitting? <Loader2 className="h-5 w-5 animate-spin" /> : "Sign In"}
                 </Button>
               </TabsContent>
 
@@ -128,9 +156,9 @@ const Login = () => {
                 <Button 
                   className="w-full bg-orange-600 hover:bg-orange-700 text-white h-14 rounded-2xl text-lg font-bold transition-all shadow-lg shadow-orange-600/10"
                   onClick={() => handleAuth('signup')}
-                  disabled={isSubmitting || !email || !password}
+                  disabled={isSubmitting ||!email ||!password}
                 >
-                  {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : "Create Account"}
+                  {isSubmitting? <Loader2 className="h-5 w-5 animate-spin" /> : "Create Account"}
                 </Button>
               </TabsContent>
             </div>

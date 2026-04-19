@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
+import { USER_ROLES } from '@/lib/supabase';
 
 interface AuthContextType {
   user: User | null;
@@ -44,7 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      setUser(session?.user ?? null);
+      setUser(session?.user?? null);
       setLoading(false);
     });
 
@@ -88,9 +89,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const isAuthenticated = !!user;
-  // For this demo, we'll consider any user with 'admin' in their email as an admin
-  const isAdmin = user?.email?.includes('admin') || user?.app_metadata?.role === 'admin';
+  const isAuthenticated =!!user;
+  const isAdmin = user?.app_metadata?.role === USER_ROLES.ADMIN;
 
   return (
     <AuthContext.Provider value={{ user, session, login, signup, logout, isAuthenticated, isAdmin, loading }}>
