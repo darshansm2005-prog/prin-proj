@@ -6,7 +6,7 @@ import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
-import { fetchProducts, Product, products as fallbackProducts } from '@/data/products';
+import { fetchProducts, Product } from '@/data/products';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Zap, Shield, Globe, Loader2 } from 'lucide-react';
 
@@ -16,9 +16,9 @@ const Index = () => {
 
   useEffect(() => {
     const loadFeatured = async () => {
+      setIsLoading(true);
       const data = await fetchProducts();
-      // If DB is empty, use fallback, otherwise take first 4
-      setFeaturedProducts(data.length > 0 ? data.slice(0, 4) : fallbackProducts.slice(0, 4));
+      setFeaturedProducts(data.slice(0, 4));
       setIsLoading(false);
     };
     loadFeatured();
@@ -45,18 +45,18 @@ const Index = () => {
           {[
             { 
               name: 'Mountain', 
-              img: '/categories/mountain.png', 
-              count: '45 Models' 
+              img: 'https://images.unsplash.com/photo-1506630448388-4e683c67ddb0?q=80&w=1200&auto=format&fit=crop', 
+              count: 'Models Available' 
             },
             { 
               name: 'Road', 
-              img: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?q=80&w=1200&auto=format&fit=crop', 
-              count: '32 Models' 
+              img: 'https://images.unsplash.com/photo-1511994298241-608e28f14f66?q=80&w=1200&auto=format&fit=crop', 
+              count: 'Models Available' 
             },
             { 
               name: 'Electric', 
               img: 'https://images.unsplash.com/photo-1593764592116-bfb2a97c642a?q=80&w=1200&auto=format&fit=crop', 
-              count: '18 Models' 
+              count: 'Models Available' 
             }
           ].map((cat, i) => (
             <Link 
@@ -91,11 +91,22 @@ const Index = () => {
             <div className="flex justify-center py-12">
               <Loader2 className="h-8 w-8 text-orange-600 animate-spin" />
             </div>
-          ) : (
+          ) : featuredProducts.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {featuredProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
+            </div>
+          ) : (
+            <div className="py-24 text-center">
+              <div className="h-20 w-20 bg-zinc-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Loader2 className="h-10 w-10 text-orange-600 animate-spin" />
+              </div>
+              <h3 className="text-2xl font-bold text-zinc-900 mb-2">No products available</h3>
+              <p className="text-zinc-500 mb-8">Check back soon for our latest inventory.</p>
+              <Button asChild className="bg-orange-600 hover:bg-orange-700 rounded-xl px-8 font-bold">
+                <Link to="/shop">Browse Categories</Link>
+              </Button>
             </div>
           )}
 
