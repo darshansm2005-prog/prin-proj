@@ -35,6 +35,7 @@ const Checkout = () => {
     }
 
     setIsProcessing(true);
+    console.log("[Checkout] Starting order process for user:", user.id);
     
     try {
       // 1. Create the order
@@ -49,7 +50,16 @@ const Checkout = () => {
         .select()
         .single();
 
-      if (orderError) throw orderError;
+      if (orderError) {
+        console.error("[Checkout] Order creation error:", orderError);
+        throw new Error(`Order failed: ${orderError.message}`);
+      }
+
+      if (!order) {
+        throw new Error("Order was created but no data was returned. Check database policies.");
+      }
+
+      console.log("[Checkout] Order created successfully:", order.id);
 
       // 2. Create order items
       const orderItems = cart.map(item => ({
@@ -65,14 +75,19 @@ const Checkout = () => {
         .from('order_items')
         .insert(orderItems);
 
-      if (itemsError) throw itemsError;
+      if (itemsError) {
+        console.error("[Checkout] Order items error:", itemsError);
+        throw new Error(`Failed to save items: ${itemsError.message}`);
+      }
+
+      console.log("[Checkout] Order items saved successfully");
 
       toast.success("Order placed successfully!");
       clearCart();
       navigate('/profile');
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to process order. Please try again.");
+    } catch (error: any) {
+      console.error("[Checkout] Final catch error:", error);
+      toast.error(error.message || "Failed to process order. Please try again.");
     } finally {
       setIsProcessing(false);
     }
@@ -82,7 +97,7 @@ const Checkout = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8">
         <h2 className="text-2xl font-bold mb-4">Your cart is empty</h2>
-        <Button asChild className="bg-orange-600"><Link to="/shop">Return to Shop</Link></Button>
+        <Button asChild className="bg-orange-600 rounded-xl"><Link to="/shop">Return to Shop</Link></Button>
       </div>
     );
   }
