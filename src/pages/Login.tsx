@@ -7,22 +7,14 @@ import { Bike, ArrowLeft, Loader2, Eye, EyeOff, Mail, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { z } from 'zod';
-import { getCsrfToken, validateCsrfToken } from '@/lib/csrf';
-import { rateLimit } from '@/lib/rate-limit';
-
-const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-});
+import { toast } from 'sonner';
 
 const Login = () => {
-  const { login, signup, isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, login, signup } = useAuth();
   const navigate = useNavigate();
+  const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [csrfToken, setCsrfToken] = useState('');
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -33,35 +25,18 @@ const Login = () => {
     }
   }, [isAuthenticated, loading, navigate]);
 
-  React.useEffect(() => {
-    const fetchCsrfToken = async () => {
-      const token = await getCsrfToken();
-      setCsrfToken(token);
-    };
-
-    fetchCsrfToken();
-  }, []);
-
-  const handleAuth = async (type: 'login' | 'signup') => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsSubmitting(true);
+
     try {
-      const result = loginSchema.safeParse({ email, password });
-      if (!result.success) {
-        toast.error(result.error.issues[0].message);
-        return;
-      }
-
-      await validateCsrfToken(csrfToken);
-
-      if (type === 'login') {
-        await rateLimit('login', email, 5, 60);
+      if (isLogin) {
         await login(email, password);
       } else {
-        await rateLimit('signup', email, 5, 60);
         await signup(email, password);
       }
-    } catch (error) {
-      // Error is handled in context via toast
+    } catch (error: any) {
+      // Error is handled in context
     } finally {
       setIsSubmitting(false);
     }
@@ -77,95 +52,84 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-[40px] shadow-2xl shadow-orange-900/5 border border-zinc-100 overflow-hidden">
+      <div className="max-w-md w-full bg-white rounded-[40px] shadow-xl shadow-orange-900/5 border border-zinc-100 overflow-hidden">
         <div className="p-8 md:p-12">
           <div className="flex flex-col items-center text-center mb-10">
             <Link to="/" className="inline-flex items-center space-x-2 mb-8 group">
-              <div className="bg-orange-600 p-2.5 rounded-2xl group-hover:rotate-12 transition-transform duration-300 shadow-lg shadow-orange-600/20">
+              <div className="bg-orange-600 p-2.5 rounded-2xl group-hover:rotate-12 transition-transform duration-300">
                 <Bike className="h-6 w-6 text-white" />
               </div>
               <span className="text-2xl font-black tracking-tighter">TRY<span className="text-orange-600">sycle</span></span>
             </Link>
             
             <h1 className="text-3xl font-black tracking-tight text-zinc-900 mb-2">
-              Welcome Back
+              {isLogin ? "Welcome Back" : "Create Account"}
             </h1>
             <p className="text-zinc-500 text-sm">
-              Enter your details to access your account.
+              {isLogin ? "Sign in to access your orders and wishlist." : "Join our community of riders today."}
             </p>
           </div>
           
-          <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-8 bg-zinc-100 rounded-2xl p-1">
-              <TabsTrigger value="login" className="rounded-xl font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm">Login</TabsTrigger>
-              <TabsTrigger value="signup" className="rounded-xl font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm">Register</TabsTrigger>
-            </TabsList>
-
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
-                <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-                  <Input 
-                    id="email" 
-                    type="email" 
-                    placeholder="name@example.com" 
-                    className="pl-11 h-12 rounded-xl border-zinc-200 focus-visible:ring-orange-600"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address</Label>
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                <Input 
+                  id="email"
+                  type="email"
+                  placeholder="name@example.com"
+                  required
+                  className="pl-11 h-12 rounded-xl border-zinc-200 focus-visible:ring-orange-600"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
               </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <Label htmlFor="password">Password</Label>
-                  <button className="text-xs font-bold text-orange-600 hover:underline">Forgot password?</button>
-                </div>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-                  <Input 
-                    id="password" 
-                    type={showPassword? "text" : "password"} 
-                    placeholder="••••••••" 
-                    className="pl-11 pr-11 h-12 rounded-xl border-zinc-200 focus-visible:ring-orange-600"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                  <button 
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 transition-colors"
-                  >
-                    {showPassword? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-
-              <TabsContent value="login" className="m-0">
-                <Button 
-                  className="w-full bg-zinc-900 hover:bg-orange-600 text-white h-14 rounded-2xl text-lg font-bold transition-all shadow-lg shadow-zinc-900/10"
-                  onClick={() => handleAuth('login')}
-                  disabled={isSubmitting ||!email ||!password}
-                >
-                  {isSubmitting? <Loader2 className="h-5 w-5 animate-spin" /> : "Sign In"}
-                </Button>
-              </TabsContent>
-
-              <TabsContent value="signup" className="m-0">
-                <Button 
-                  className="w-full bg-orange-600 hover:bg-orange-700 text-white h-14 rounded-2xl text-lg font-bold transition-all shadow-lg shadow-orange-600/10"
-                  onClick={() => handleAuth('signup')}
-                  disabled={isSubmitting ||!email ||!password}
-                >
-                  {isSubmitting? <Loader2 className="h-5 w-5 animate-spin" /> : "Create Account"}
-                </Button>
-              </TabsContent>
             </div>
-          </Tabs>
 
-          <div className="mt-10 pt-8 border-t border-zinc-100">
-            <Button asChild variant="ghost" className="w-full rounded-xl text-zinc-500 hover:text-orange-600 font-bold">
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                <Input 
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  required
+                  className="pl-11 pr-11 h-12 rounded-xl border-zinc-200 focus-visible:ring-orange-600"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="w-full bg-orange-600 hover:bg-orange-700 h-12 rounded-xl font-bold text-lg shadow-lg shadow-orange-600/20"
+            >
+              {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : (isLogin ? "Sign In" : "Sign Up")}
+            </Button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <button 
+              onClick={() => setIsLogin(!isLogin)}
+              className="text-sm font-bold text-zinc-500 hover:text-orange-600 transition-colors"
+            >
+              {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Sign In"}
+            </button>
+          </div>
+
+          <div className="mt-8 pt-8 border-t border-zinc-100">
+            <Button asChild variant="ghost" className="w-full rounded-xl text-zinc-500 hover:text-orange-600">
               <Link to="/"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Home</Link>
             </Button>
           </div>

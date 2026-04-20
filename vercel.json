@@ -1,18 +1,5 @@
 {
-  "version": 2,
-  "name": "trycycle",
-  "alias": ["trycycle.vercel.app"],
-  "env": {
-    "CSRF_SECRET": "@csrf-secret"
-  },
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" }
-      ]
-    }
-  ],
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
       "source": "/(.*)",
