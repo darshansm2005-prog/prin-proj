@@ -185,8 +185,8 @@ const Checkout = () => {
           <div className="lg:sticky lg:top-24 h-fit">
             <div className="bg-zinc-900 text-white p-8 rounded-3xl shadow-xl">
               <h2 className="text-2xl font-black mb-8">Order Summary</h2>
-              {/* Removed fixed max‑height and overflow‑auto to eliminate the scrollbar */}
-              <div className="space-y-4 mb-8 max-h-[300px] pr-2">
+              {/* Removed fixed max-height and overflow styles */}
+              <div className="space-y-4 mb-8 pr-2">
                 {cart.map((item) => (
                   <div key={item.id} className="flex gap-4 items-center">
                     <div className="h-16 w-16 bg-white/10 rounded-xl overflow-hidden flex-shrink-0">
