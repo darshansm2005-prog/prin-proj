@@ -92,6 +92,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // For this demo, we'll consider any user with 'admin' in their email as an admin
   const isAdmin = user?.email?.includes('admin') || user?.app_metadata?.role === 'admin';
 
+  // Create default admin user if it doesn't exist
+  useEffect(() => {
+    const createDefaultAdmin = async () => {
+      if (!user && !loading) {
+        try {
+          // Check if admin user exists
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('id', 'admin@trysycle.com');
+
+          if (error) throw error;
+
+          // If admin user doesn't exist, create it
+          if (!data || data.length === 0) {
+            const { data: userData, error: userError } = await supabase.auth.signUp({
+              email: 'admin@trysycle.com',
+              password: 'admin123',
+            });
+
+            if (userError) throw userError;
+
+            // Update user metadata to include admin role
+            await supabase
+              .from('profiles')
+              .upsert({
+                id: userData.user.id,
+                first_name: 'Admin',
+                last_name: 'User',
+                avatar_url: 'https://example.com/admin-avatar.png',
+                user_metadata: { role: 'admin' }
+              });
+          }
+        } catch (error) {
+          console.error("Failed to create default admin user:", error);
+        }
+      }
+    };
+
+    createDefaultAdmin();
+  }, [user, loading]);
+
   return (
     <AuthContext.Provider value={{ user, session, login, signup, logout, isAuthenticated, isAdmin, loading }}>
       {children}
