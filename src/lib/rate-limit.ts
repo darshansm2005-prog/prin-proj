@@ -35,7 +35,8 @@ export const rateLimit = async (
   set(rateLimitStore, `${digest}:count`, requestCount + 1);
   set(rateLimitStore, digest, currentTime);
 
-  // Clean up old entries periodically  if (requestCount % 10 === 0) {
+  // Clean up old entries periodically
+  if (requestCount % 10 === 0) {
     const now = Math.floor(Date.now() / 1000);
     Object.keys(rateLimitStore).forEach(k => {
       if (k !== digest && 

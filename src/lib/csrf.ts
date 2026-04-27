@@ -13,21 +13,12 @@ export const getCSRFToken = (): string => {
   return token;
 };
 
-export const validateRequest = (): boolean => {
+export const validateRequest = (headerToken: string): boolean => {
   const token = getCSRFToken();
-  const headerToken = getCSRFTokenFromHeader();
   return validateCSRFToken(token, headerToken || '');
 };
 
-// Helper to extract token from Authorization header
-const getCSRFTokenFromHeader = (): string | undefined => {
-  const authHeader = window.location.headers.get('Authorization');
-  if (!authHeader) return undefined;
-  const match = authHeader.match(/CSRF-Token=(.+)/);
-  return match ? match[1] : undefined;
-};
-
-// Middleware hook for API routes
+// Middleware hook for API routes (simulated for client-side)
 export const withCSRFProtection = (handler: any) => {
   return async (req: any, res: any) => {
     const token = req.headers['csrf-token'];
