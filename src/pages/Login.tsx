@@ -3,11 +3,11 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { Bike, ArrowLeft, Loader2, Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import { Bike, ArrowLeft, Loader2, Eye, EyeOff, Mail, Lock, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const Login = () => {
   const { isAuthenticated, loading, login, signup } = useAuth();
@@ -15,6 +15,7 @@ const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,6 +28,8 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(false);
+    setError(null);
     setIsSubmitting(true);
 
     try {
@@ -35,8 +38,12 @@ const Login = () => {
       } else {
         await signup(email, password);
       }
-    } catch (error: any) {
-      // Error is handled in context
+    } catch (err: any) {
+      if (err.message?.includes('rate limit')) {
+        setError("Too many attempts. Please try a different email address (e.g. admin2@trysycle.com) or wait a few minutes.");
+      } else {
+        setError(err.message || "An error occurred during authentication.");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -69,6 +76,15 @@ const Login = () => {
               {isLogin ? "Sign in to access your orders and wishlist." : "Join our community of riders today."}
             </p>
           </div>
+
+          {error && (
+            <Alert variant="destructive" className="mb-6 rounded-2xl bg-red-50 border-red-100 text-red-800">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="text-xs font-medium">
+                {error}
+              </AlertDescription>
+            </Alert>
+          )}
           
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
@@ -121,7 +137,10 @@ const Login = () => {
 
           <div className="mt-6 text-center">
             <button 
-              onClick={() => setIsLogin(!isLogin)}
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setError(null);
+              }}
               className="text-sm font-bold text-zinc-500 hover:text-orange-600 transition-colors"
             >
               {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Sign In"}
