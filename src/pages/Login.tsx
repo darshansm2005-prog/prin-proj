@@ -28,7 +28,8 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(false);
+    if (isSubmitting) return; // Prevent double submission
+    
     setError(null);
     setIsSubmitting(true);
 
@@ -40,11 +41,10 @@ const Login = () => {
       }
     } catch (err: any) {
       if (err.message?.includes('rate limit')) {
-        setError("Too many attempts. Please try a different email address (e.g. admin2@trysycle.com) or wait a few minutes.");
+        setError("Supabase rate limit reached. Please wait a few minutes or change the limit in your Supabase Dashboard (Authentication -> Settings -> Rate Limits).");
       } else {
         setError(err.message || "An error occurred during authentication.");
       }
-    } finally {
       setIsSubmitting(false);
     }
   };
